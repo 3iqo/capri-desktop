@@ -220,6 +220,10 @@ tourne le dos (ça passe, et en parler dans son chat aide). Son chat sait aussi 
 aujourd'hui. Pour les repérer, le titre de la fenêtre qui est devant est comparé à cette liste de noms, sur ton PC : il
 n'est ni gardé ni envoyé, seul le nom trouvé lui parvient. Décoche *Jalouse des autres IA* dans son menu pour arrêter.
 
+**Son chat sait ce qui vient de se passer.** Fâchée de s'être fait lancer, jalouse, sonnée ou contente : elle t'accueille
+comme ça en ouvrant le chat, et son IA (même un petit modèle local) répond dans cette humeur. Fâchée ou boudeuse, elle le
+reste jusqu'à ce que tu t'excuses (« désolé », « pardon »…), ou que ça lui passe.
+
 ### À la souris
 
 Elle n'attrape la souris que sur son corps (au pixel près) : tout le reste de l'écran reste utilisable normalement.

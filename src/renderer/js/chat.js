@@ -69,6 +69,8 @@ const SITES = {
 const BROWSER = /chrome|edge|firefox|opera|brave|vivaldi|duckduckgo|browser/i;
 // local models this small mostly talk nonsense ("llama3.2:1b", "qwen2.5:0.5b"…)
 const TINY = /[:-](0\.5b|1b|1\.5b|135m|270m|360m)\b/i;
+// her face when she greets you in a mood (bond.js)
+const MOOD_FACE = { angry: 'many', sulk: 'aside', dizzy: 'wide', thrown: 'wide', jealous: 'look', fun: 'laugh', happy: 'laugh', forgiven: 'smug' };
 
 export class Chat {
   constructor({ capri, panel, voice, host, brain }) {
@@ -142,13 +144,18 @@ export class Chat {
     this.listApps();
     const shortModel = status.model.replace(/:latest$/, '').replace(/^models\//, ''); // Ollama's tag, Gemini's prefix
     const tiny = status.provider === 'ollama' && TINY.test(status.model) && this.onBetterModel;
+    // angry, sulking, dizzy…: she greets you the way she feels, and her model is told she did
+    const feeling = this.bond?.feeling;
+    const moody = !tiny && feeling && t.moody[feeling];
+    const hello = moody ? fmt(pick(moody), this.bond.mood.vars) : pick(this.history.length ? t.again : t.hello);
+    this.opening = moody ? hello : null;
     host.focusOverlay(true); // the keyboard, for typing to her
     const shown = this.panel.say({
       kind: 'chat',
-      face: 'look',
+      face: moody ? MOOD_FACE[feeling] : 'look',
       badge: t.badge,
       tag: shortModel,
-      line: tiny ? fmt(t.tiny, { model: shortModel }) : pick(this.history.length ? t.again : t.hello),
+      line: tiny ? fmt(t.tiny, { model: shortModel }) : hello,
       actions: tiny ? [{ id: 'better', label: t.better, primary: true }] : [],
       onAction: () => {
         this.panel.hide(); // her chat holds off her guide's panels: it goes first
@@ -200,8 +207,25 @@ export class Chat {
     // line about it comes under her answer (Claude Code, answering her chat, does things its own way)
     const asked = this.agent ? null : this.asked(text);
     const early = asked && asked.kind !== 'close' ? this.doNow(asked) : null;
+    this.bond?.heard(text); // "sorry": she lets it go
     await Promise.race([this.appsReady, new Promise((r) => setTimeout(r, 1500))]);
+    // what she greeted you with (angry, sulking…), in the conversation before your message, so her
+    // answer carries on from it (after another answer of hers: added to that one, never two in a row)
+    if (this.opening) {
+      const at = this.history.length - 1;
+      const before = this.history[at - 1];
+      if (before?.role === 'assistant') this.history[at - 1] = { ...before, content: `${before.content}\n${this.opening}` };
+      else this.history.splice(at, 0, { role: 'assistant', content: this.opening });
+      this.opening = null;
+    }
     const messages = [{ role: 'system', content: this.persona() }, ...this.history.slice(-REMEMBER)];
+    // In a mood (angry, sulking…): said again right by your message, for this answer only. Small
+    // local models mostly go by the last thing they read: up in her prompt alone, they forget it.
+    const mood = !this.agent && this.bond?.moodLine();
+    if (mood) {
+      const last = messages.at(-1);
+      messages[messages.length - 1] = { ...last, content: `${last.content}\n\n(Note for you, never repeat it: ${mood.replace(/^Right now: /, '')})` };
+    }
     // nothing yet after a few seconds: Ollama is still loading the model (the first answer after a start),
     // or Claude Code is at work
     const wait = this.agent ? this.t.working : this.cold ? this.t.loading : null;
@@ -230,7 +254,6 @@ export class Chat {
     this.panel.stream(answer, { done: true });
     this.panel.setFace(mood(answer));
     this.panel.setChatBusy(false);
-    this.jealousy?.forgive(); // talking it over makes it better
     if (!this.agent) this.after(res.text, answer, asked, early, text);
     this.listApps(); // fresh for the next message
   }
@@ -543,6 +566,8 @@ export class Chat {
         ? ['Under the hood you are Claude Code, working in the user\'s project: really do what they ask with your tools, as carefully as ever. Only your final answer is in character: it shows in a small speech bubble, so sum up what you did in those few sentences.']
         : this.powers()),
       ...(watching ? [`If the user asks what ${assistant} is doing, here is all you know (never make anything up): ${this.brain.context()}`] : []),
+      // how she feels right now, last but for her language: small models follow the end of it best
+      ...[this.bond?.moodLine()].filter(Boolean),
       lang.last,
     ].join('\n');
   }

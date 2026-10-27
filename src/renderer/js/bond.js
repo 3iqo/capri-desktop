@@ -19,6 +19,22 @@ const FULL = 1000;
 const CAPS = { day: 10, time: 18, chat: 20, click: 4, claude: 10, remind: 6 };
 const SAVE_MS = 15000;
 
+// How she feels right now, after something just happened between you, told to her chat so it
+// answers the way she just acted (a small model needs it said plainly), and how long it lasts.
+// Angry or sulking, it lasts until you say sorry (or a while).
+const FEELINGS = {
+  thrown: ['A moment ago the user grabbed you and threw you across the screen, and you crashed. You are a bit shaken, and you let them know.', 4],
+  fun: ['A moment ago the user threw you across the screen and you loved it. You are excited and want to go again.', 3],
+  dizzy: ['The user just threw you across the screen twice in a row. You are still dizzy, and grumpy about it.', 5],
+  angry: ['You are angry with the user, because they grabbed you and threw you across the screen three times in a row. Answer coldly and sarcastically, in few words, and remind them why you are angry. Do not be friendly until they say sorry.', 8],
+  jealous: ['You just saw the user using {rival} (another AI) instead of you. You are jealous, and you bring it up.', 4],
+  sulk: ['You are sulking, because the user was using {rival} (another AI) instead of you. You are jealous and hurt: answer in few words, a bit dramatic, and bring up {rival}. Forgive them only if they say sorry.', 8],
+  happy: ['You feel closer to the user than ever (your sync with them just reached {percent}%). You are happy, and a little shy about it.', 5],
+  forgiven: ['The user just said sorry. You forgive them, a little grudgingly, and you are nicer to them again.', 3],
+};
+// "sorry", in her five languages
+const SORRY = /(?<![\p{L}])(sorry|my bad|i apologi[sz]e|pardon|d[ée]sol[ée]e?|dsl|excuse[- ]moi|je m['’]excuse|lo siento|perd[oó]n|disculpa|desculp[ae]|foi mal|прости|извини)(?![\p{L}])/iu;
+
 export class Bond {
   constructor({ host, data }) {
     this.host = host;
@@ -26,8 +42,35 @@ export class Bond {
     this.data = { xp: 0, first: day, last: day, days: 1, streak: 1, caps: { date: day }, ...(data || {}) };
     this.away = 0;       // days since you were last together, when this run started
     this.onStage = null; // (stage) => a new stage reached
+    this.onCalm = null;  // () => you said sorry and she let it go
+    this.mood = null;    // how she feels right now: { kind, vars, until }
     this.saveTimer = 0;
     this.arrive();
+  }
+
+  // Something just happened that she feels about (a key of FEELINGS), for a while.
+  feel(kind, vars = {}) {
+    this.mood = { kind, vars, until: Date.now() + FEELINGS[kind][1] * 60 * 1000 };
+  }
+
+  // How she feels, if it hasn't worn off: 'angry', 'sulk'…, or null.
+  get feeling() {
+    if (this.mood && Date.now() > this.mood.until) this.mood = null;
+    return this.mood?.kind || null;
+  }
+
+  // Your message to her: an apology calms her down, when she's angry or sulking. True if it did.
+  heard(text) {
+    if (!['angry', 'sulk', 'dizzy', 'thrown', 'jealous'].includes(this.feeling) || !SORRY.test(text)) return false;
+    this.feel('forgiven');
+    this.onCalm?.();
+    return true;
+  }
+
+  // For her chat: how she feels right now, if anything.
+  moodLine() {
+    const kind = this.feeling;
+    return kind ? `Right now: ${fmt(FEELINGS[kind][0], this.mood.vars)}` : '';
   }
 
   get stage() {
@@ -118,7 +161,7 @@ const ACT_AFTER = 45000;             // this long on it, lately: she does someth
 const NOTICE_EVERY = 20 * 60 * 1000; // per AI
 const ACT_EVERY = 40 * 60 * 1000;
 const ACTS_A_DAY = 3;
-const SULK_MS = 3 * 60 * 1000;
+const SULK_MS = 5 * 60 * 1000;
 const TALLY = 'capri.rivals'; // today's minutes on each of them, for her chat
 
 export class Jealousy {
@@ -216,6 +259,7 @@ export class Jealousy {
     const toward = win ? Math.sign(win.x + win.w / 2 - this.capri.pos.x) || 1 : this.capri.towardCenter();
     this.capri.perform(stage >= 2 ? 'glare' : 'curious', toward);
     this.panel.say({ kind: 'info', face: ['aside', 'aside', 'look', 'look', 'many'][stage], line: fmt(pick(this.t[tier]), { rival: RIVALS[key] }), hold: 4500 });
+    if (stage >= 1 && this.bond.feeling !== 'sulk') this.bond.feel('jealous', { rival: RIVALS[key] });
   }
 
   // A while on it: she goes and sits on its window, glares at you, and takes it over.
@@ -229,7 +273,10 @@ export class Jealousy {
     this.bond.lose(2);
     this.panel.hide();
     const say = fmt(pick(this.t.say), { rival: RIVALS[f.key] });
-    if (await this.capri.jealous(win, { say })) this.sulk = { key: f.key, until: Date.now() + SULK_MS, clicks: 0 };
+    if (await this.capri.jealous(win, { say })) {
+      this.sulk = { key: f.key, until: Date.now() + SULK_MS, clicks: 0 };
+      this.bond.feel('sulk', { rival: RIVALS[f.key] });
+    }
   }
 
   // A click on her while she sulks: she turns her back on you. After a few (fewer the more she
@@ -241,6 +288,7 @@ export class Jealousy {
     const rival = RIVALS[s.key];
     if (s.clicks >= (this.bond.stage >= 3 ? 2 : 3)) {
       this.sulk = null;
+      this.bond.feel('forgiven');
       this.capri.perform('hop');
       this.panel.say({ kind: 'idle', face: 'smug', line: pick(this.t.forgive), hold: 3500 });
       return true;
@@ -251,7 +299,7 @@ export class Jealousy {
     return true;
   }
 
-  // Talking it over in her chat makes it better.
+  // You said sorry (in her chat): she stops sulking.
   forgive() {
     this.sulk = null;
   }

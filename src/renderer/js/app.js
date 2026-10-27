@@ -268,11 +268,13 @@ async function boot() {
     const now = performance.now();
     throws.push(now);
     while (throws.length && now - throws[0] > 120000) throws.shift();
-    let line, face = 'smug';
+    // how she says it, and how she feels about it after (her chat knows: bond.js)
+    let line, face = 'smug', feel = null;
     if (throws.length >= 3) {
       throws.length = 0;
       line = pick(t.angry);
       face = 'many';
+      feel = 'angry';
       capri.refuseUntil = now + 25000;
       bond.lose(1);
       if (mouse) capri.zap(mouse.x, mouse.y);
@@ -281,17 +283,27 @@ async function boot() {
     else if (throws.length === 2) {
       line = pick(t.again);
       face = 'aside';
+      feel = 'dizzy';
     } else if (hard > 0.75 && Math.random() < 0.5) {
       line = pick(t.screen);
       face = 'laugh';
+      feel = 'thrown';
     } else if (bond.stage >= 3) {
       line = pick(t.fun);
       face = 'laugh';
+      feel = 'fun';
     } else {
       line = pick(t.ow);
       face = 'wide';
+      feel = 'thrown';
     }
+    if (feel && bond.feeling !== 'angry') bond.feel(feel);
     panel.say({ kind: 'info', face, line, hold: 3800 });
+  };
+  // you said sorry in her chat: she lets it go (and lets you pick her up again)
+  bond.onCalm = () => {
+    jealousy.forgive();
+    capri.refuseUntil = 0;
   };
   capri.onDodge = () => panel.say({ kind: 'info', face: 'smug', line: pick(brain.t.thrown.dodge), hold: 2500 });
 
@@ -309,6 +321,7 @@ async function boot() {
     const stage = newStage;
     newStage = 0;
     const up = brain.t.bond.up[stage];
+    if (!['angry', 'sulk'].includes(bond.feeling)) bond.feel('happy', { percent: bond.percent });
     voice.play('star');
     await capri.perform('split');
     capri.perform('hop');
