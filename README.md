@@ -420,8 +420,12 @@ over Capri's window, without touching the real one, `/debug/type` types in her c
 
 Capri / Project Capricorn, Cyberpunk and Cyberpunk: Edgerunners belong to CD PROJEKT RED, Studio Trigger and Netflix.
 This is a non-commercial fan project with no affiliation. The character images in `assets/capri/` come from frames of
-the show, a fan-made cut-out and fan art (her intro's close-ups); they are **not** covered by the code's MIT license.
+the show, a fan-made cut-out and fan art (her intro's close-ups); they are **not** covered by the code's license.
 If a rights holder wants them removed, open an issue.
+
+**License: free, never for sale.** The code is under the [PolyForm Noncommercial License 1.0.0](LICENSE): you can use
+her, change her and share what you made, for free. Selling Capri, or anything made from her code (keys, subscriptions,
+paid access, paid orders), is not allowed. Versions up to 0.4.3 were under the MIT License.
 
 Fonts: Chakra Petch and JetBrains Mono, under the SIL Open Font License, via Fontsource.
 

@@ -27,7 +27,7 @@
     "cyberpunk",
     "edgerunners"
   ],
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=20"
   },

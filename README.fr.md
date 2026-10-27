@@ -442,7 +442,11 @@ factice sur la fenêtre de Capri, sans toucher au vrai, `/debug/type` écrit dan
 
 Capri / Project Capricorn, Cyberpunk et Cyberpunk: Edgerunners appartiennent à CD PROJEKT RED, Studio Trigger et Netflix.
 Projet de fan, non commercial, sans lien avec eux. Les images du personnage dans `assets/capri/` viennent d'images de la série,
-d'une découpe faite par des fans et d'un fan art (les gros plans de son intro) ; elles ne sont **pas** couvertes par la licence MIT du code.
+d'une découpe faite par des fans et d'un fan art (les gros plans de son intro) ; elles ne sont **pas** couvertes par la licence du code.
 Si un ayant droit veut qu'elles soient retirées, ouvre une issue.
+
+**Licence : gratuit, jamais à vendre.** Le code est sous [PolyForm Noncommercial License 1.0.0](LICENSE) : tu peux
+l'utiliser, la modifier et partager ce que tu as fait, gratuitement. Vendre Capri, ou quoi que ce soit fait à partir de
+son code (clés, abonnements, accès payant, commandes payantes), est interdit. Les versions jusqu'à la 0.4.3 étaient sous licence MIT.
 
 Polices : Chakra Petch et JetBrains Mono, sous licence SIL Open Font License, via Fontsource.
