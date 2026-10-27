@@ -982,6 +982,16 @@ export class Capri {
         this.fx.burst(mane.x, mane.y, { count: 16, power: 0.7, spread: 150 * s });
         this.voice.play('tick');
         break;
+      case 'steam': { // overheating: heat coming off her, and she flushes red for a drawing
+        this.fx.heat(h.x + rand(-30, 30) * s, h.top + 20 * s);
+        const p = this.p;
+        p.sil = RED;
+        p.silAmount = 0.32;
+        setTimeout(() => {
+          if (p.sil === RED && p.silAmount < 0.5) p.silAmount = 0;
+        }, ON_TWOS);
+        break;
+      }
       case 'hiss': // jealous: sparks crawling over her, and a hiss
         this.fx.crackle(() => this.head(), { life: 520, radius: 90 * s + 20, count: 3 });
         this.voice.play('jealous');
@@ -2292,6 +2302,71 @@ export class Capri {
     await this.arrive(to, { face: near ? (cursor.x < to.x ? 1 : -1) : null });
     await this.settle();
     return cursor;
+  }
+
+  // ---------- your PC (pc.js) ----------
+
+  // Is she out and free to act, with nothing else going on?
+  get free() {
+    return !this.busy && !this.stowed && !this.dormant && !this.hidden && !this.dragging && !this.act
+      && (this.stance === 'stand' || this.stance === 'sit');
+  }
+
+  // The battery running out: she sags and flickers, fading, then holds on.
+  async drain() {
+    if (!this.free) return false;
+    this.perform('drained');
+    if (reducedMotion.matches) return true;
+    const p = this.p;
+    for (const [alpha, ms] of [[0.45, 120], [1, 90], [0.3, 160], [0.85, 110], [0.5, 140], [1, 0]]) {
+      p.alpha = alpha;
+      p.glitchSeed = Math.random() * 100;
+      p.glitch = alpha < 0.6 ? 0.25 : 0;
+      await sleep(ms);
+    }
+    p.glitch = 0;
+    return true;
+  }
+
+  // Plugged back in: the power rushes into her, her specks light up, a hop.
+  recharge() {
+    if (this.stowed || this.dormant || this.hidden) return;
+    const h = this.head();
+    if (!reducedMotion.matches) {
+      this.fx.burst(h.x, h.y + 60 * this.scale, { count: 16, inward: true, power: 0.6, spread: 140 * this.scale });
+      tween(this.p, { sparkle: 1.9 }, 300, ease.out).then(() => tween(this.p, { sparkle: 1 }, 700, ease.inOut));
+    }
+    this.voice.play('rise');
+    if (this.free) this.perform('hop');
+  }
+
+  // A USB stick plugged in: she dives down into it (by the clock, where Windows shows it), has a
+  // look around in there, and comes back out to her spot.
+  async visit(at) {
+    if (!this.free || reducedMotion.matches) return false;
+    this.busy = true;
+    this.wake();
+    this.onTeleport?.('start');
+    await this.perform('dive');
+    const head = await this.vanish({ beam: false });
+    this.fx.streak(head.x, head.y, at.x, at.y);
+    this.fx.burst(at.x, at.y, { count: 12, inward: true, power: 0.5, spread: 30 });
+    this.fx.ring(at.x, at.y, { size: 0.3 });
+    this.voice.play('bolt');
+    for (let i = 0; i < 3; i++) {
+      await sleep(650);
+      this.fx.crackle(at, { life: 380, radius: 40, count: 2 }); // her, rummaging in there
+    }
+    await sleep(300);
+    const to = this.spot('post');
+    const toHead = this.head(to);
+    this.fx.ring(at.x, at.y, { size: 0.35 });
+    this.fx.burst(at.x, at.y, { count: 12, power: 0.6, spread: 30 });
+    this.fx.streak(at.x, at.y, toHead.x, toHead.y);
+    await sleep(60);
+    await this.arrive(to);
+    await this.settle();
+    return true;
   }
 
   // ---------- jealous ----------

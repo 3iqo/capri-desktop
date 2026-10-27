@@ -86,6 +86,12 @@ glitche, commente chaque action, vient te chercher quand elle attend ta permissi
   sur ta souris, et elle rit. Puis elle ressort d'une autre fenêtre. Rien n'est dessiné sur les fenêtres posées devant,
   et le contenu de la fenêtre n'est jamais lu : c'est juste dessiné par-dessus, deux secondes.
   Si ça te gêne, décoche *Posséder mes fenêtres* dans le menu de l'icône.
+- **Elle sent ton PC** (elle vit dedans, après tout) : processeur à fond pendant un moment, elle surchauffe, s'évente
+  et de la chaleur monte de sa crinière. Batterie faible (sur un portable), elle s'affaisse et clignote, puis revit
+  quand tu la branches. Plus de réseau, elle encaisse le coup ; il revient, elle est contente. Une clé USB branchée,
+  elle plonge dedans (près de l'horloge), fouille un peu et revient donner son avis. Un jeu devant toi (Steam, Epic,
+  Riot, Xbox, GOG), elle le commente et se range pendant que tu joues, puis revient te demander si tu as gagné.
+  Décoche *Réagir à mon PC* dans son menu pour arrêter.
 - **Petites fioritures** : un tour complet avec des images rémanentes, un saut, un regard à gauche puis à droite, la tête penchée,
   et ses autres esprits (ses copies verte et rouge) qui se détachent d'elle, flottent un instant et reviennent d'un coup.
 
@@ -97,7 +103,7 @@ glitche, commente chaque action, vient te chercher quand elle attend ta permissi
 
 ![Elle s'endort jusqu'à son masque, se réveille, et rangée en bas à gauche](docs/sleep.png)
 
-Le suivi des fenêtres ne marche que sous Windows pour l'instant (un petit script PowerShell lit la position des fenêtres, jamais leur contenu ; le titre de celle qui est devant sert seulement à repérer une autre IA, voir « Elle s'attache à toi »).
+Le suivi des fenêtres ne marche que sous Windows pour l'instant (un petit script PowerShell lit la position des fenêtres, jamais leur contenu ; le titre de celle qui est devant sert seulement à repérer une autre IA, voir « Elle s'attache à toi », et le dossier de son programme à reconnaître un jeu ; les clés USB branchées ne sont vues que par leur lettre).
 Sur macOS et Linux, elle flotte, dépasse des bords, tombe et se balade quand même.
 
 ### Elle te fait visiter
@@ -245,7 +251,7 @@ Elle n'attrape la souris que sur son corps (au pixel près) : tout le reste de l
   (ou refais Ctrl+Alt+C) pour la faire revenir.
 - **Son menu** : clic droit sur elle (il est aussi sur son icône près de l'horloge) : téléporter, regarder le satellite,
   démo, comment ça marche, rapport de mission, lui parler, regarder ton écran, rappels, taille, son, écran (et te suivre d'un écran à
-  l'autre), modèle IA, se balader, posséder tes fenêtres, jalouse des autres IA, langue, lancement au démarrage, hooks.
+  l'autre), modèle IA, se balader, posséder tes fenêtres, jalouse des autres IA, réagir à ton PC, langue, lancement au démarrage, hooks.
   Tout en haut : où vous en êtes, elle et toi.
 
 Elle parle **français, anglais, espagnol, portugais du Brésil et russe**, et choisit toute seule la langue de ton
@@ -492,6 +498,7 @@ src/renderer/js/
   reminders.js           les rappels : les lire dans ton message, les garder, quand ils tombent
   bond.js                son lien avec toi, qui grandit, et sa jalousie des autres IA
   look.js                elle regarde ton écran : la permission, le scan, ce que son IA en dit
+  pc.js                  ton PC comme elle le sent : processeur, batterie, réseau, clés USB, jeux
   lines.js               ce qu'elle dit (FR / EN / ES / PT / RU)
   chip.js                son masque : quand elle dort, et en bas à gauche quand tu la ranges
   voice.js               les sons

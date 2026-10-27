@@ -404,6 +404,7 @@ function rebuildTray() {
     { label: t.wander, type: 'checkbox', checked: cfg.wander, click: (item) => updateConfig({ wander: item.checked }) },
     { label: t.possess, type: 'checkbox', checked: cfg.possess, click: (item) => updateConfig({ possess: item.checked }) },
     { label: t.jealous, type: 'checkbox', checked: cfg.jealous !== false, click: (item) => updateConfig({ jealous: item.checked }) },
+    { label: t.pcReact, type: 'checkbox', checked: cfg.pcReact !== false, click: (item) => updateConfig({ pcReact: item.checked }) },
     {
       // she asks first (what she'll send where), then turns it on herself
       label: t.lookAuto, type: 'checkbox', checked: Boolean(cfg.watchScreen),
@@ -701,6 +702,20 @@ function registerIpc() {
     }
   });
   ipcMain.handle('look:say', (_e, request) => sayAboutSnap(request || {}));
+  // how hard the processor works, in %, since the last time she asked (pc.js)
+  let cpuBefore = null;
+  ipcMain.handle('pc:cpu', () => {
+    const now = os.cpus().map(({ times: t }) => ({ idle: t.idle, total: t.user + t.nice + t.sys + t.idle + t.irq }));
+    const before = cpuBefore;
+    cpuBefore = now;
+    if (!before) return null;
+    let idle = 0, total = 0;
+    now.forEach((c, i) => {
+      idle += c.idle - (before[i]?.idle || 0);
+      total += c.total - (before[i]?.total || 0);
+    });
+    return total > 0 ? Math.round(100 * (1 - idle / total)) : null;
+  });
   // where her AI runs, for what she tells you before she looks: { local, provider, model }
   ipcMain.handle('look:where', () => {
     const cfg = config.load();

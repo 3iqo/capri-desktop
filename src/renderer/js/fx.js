@@ -511,6 +511,15 @@ export class FxLayer {
     this.add({ type: 'scan', life: FRAME_MS * 20, rect, covers });
   }
 
+  // Heat coming off her (overheating with your processor): wavy lines rising and fading, now and then
+  // a temperature with them.
+  heat(x, y) {
+    for (let i = 0; i < 3; i++) {
+      this.add({ type: 'heat', life: rand(520, 760), x: x + (i - 1) * rand(16, 26), y: y + rand(-6, 6), phase: rand(0, 6), h: rand(30, 52) });
+    }
+    if (Math.random() < 0.4) this.add({ type: 'glyph', life: 900, x: x + rand(-20, 20), y: y - 10, text: pick(['99°C', '°C', '!!', '105°']), drift: rand(-10, 10), color: COLORS.red });
+  }
+
   // Everything gone at once (her window is going to another screen: none of it belongs there).
   clear() {
     for (const it of this.items) it.done?.();
@@ -1556,6 +1565,22 @@ export class FxLayer {
         ctx.restore();
         break;
       }
+      case 'heat': {
+        // rising on twos, wavering, thinning out
+        const k = Math.floor(t * 6) / 6;
+        const rise = 20 + k * 46;
+        const pts = Array.from({ length: 7 }, (_, j) => {
+          const u = j / 6;
+          return [it.x + Math.sin(it.phase + u * 6 + k * 5) * 4, it.y - rise - u * it.h * (1 - k * 0.4)];
+        });
+        ctx.save();
+        ctx.globalAlpha = 1 - k;
+        ctx.lineCap = 'round';
+        this.stroke(pts, COLORS.violet, 3, -1.5, 1.5);
+        this.stroke(pts, k < 0.4 ? COLORS.red : COLORS.paper, 2);
+        ctx.restore();
+        break;
+      }
       case 'scan': {
         const r = it.rect();
         if (!r) {
@@ -2132,7 +2157,7 @@ export class FxLayer {
         const x = Math.round(it.x + it.drift * t);
         ctx.fillStyle = COLORS.violet;
         ctx.fillText(it.text, x - 1, y + 1);
-        ctx.fillStyle = COLORS.green;
+        ctx.fillStyle = it.color || COLORS.green;
         ctx.fillText(it.text, x, y);
         ctx.restore();
         break;

@@ -30,6 +30,9 @@ public static class CapriWindows {
   [DllImport("user32.dll")] static extern int GetClassName(IntPtr hwnd, StringBuilder name, int max);
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int max);
   [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+  [DllImport("kernel32.dll")] static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern bool QueryFullProcessImageName(IntPtr process, int flags, StringBuilder name, ref int size);
+  [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
   [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr value);
   [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out RECT value, int size);
   [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out int value, int size);
@@ -57,18 +60,60 @@ public static class CapriWindows {
   };
   static IntPtr procOf = IntPtr.Zero;
   static string proc = "";
+  static string game = "";
+
+  // A game: its program sits in a launcher's library (Steam, Epic, Riot, Xbox, GOG). The game is the
+  // name of its folder there (the launchers themselves aren't games).
+  static readonly Regex GAME = new Regex(@"\\(?:steamapps\\common|Epic Games|Riot Games|XboxGames|GOG Galaxy\\Games)\\([^\\]+)\\", RegexOptions.IgnoreCase);
+  static readonly Regex NOT_GAME = new Regex(@"launcher|client|redistributable|steamworks", RegexOptions.IgnoreCase);
+
+  // The program behind the window in front, when it changes: its name, and the game it is, if one.
+  static void Program(IntPtr fg) {
+    if (fg == procOf) return;
+    procOf = fg;
+    proc = "";
+    game = "";
+    uint pid;
+    GetWindowThreadProcessId(fg, out pid);
+    try { proc = System.Diagnostics.Process.GetProcessById((int)pid).ProcessName.ToLowerInvariant(); } catch {}
+    IntPtr h = OpenProcess(0x1000, false, pid); // PROCESS_QUERY_LIMITED_INFORMATION
+    if (h == IntPtr.Zero) return;
+    var path = new StringBuilder(1024);
+    int size = path.Capacity;
+    if (QueryFullProcessImageName(h, 0, path, ref size)) {
+      var m = GAME.Match(path.ToString());
+      if (m.Success && !NOT_GAME.IsMatch(m.Groups[1].Value)) game = m.Groups[1].Value;
+    }
+    CloseHandle(h);
+  }
+
+  static string Json(string s) {
+    return "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+  }
+
+  // USB sticks (and SD cards) plugged in, by drive letter, looked at every couple of seconds.
+  static string usb = "[]";
+  static DateTime usbAt = DateTime.MinValue;
+  static string Usb() {
+    if ((DateTime.Now - usbAt).TotalMilliseconds < 2000) return usb;
+    usbAt = DateTime.Now;
+    var letters = new StringBuilder();
+    try {
+      foreach (var d in System.IO.DriveInfo.GetDrives()) {
+        if (d.DriveType != System.IO.DriveType.Removable || !d.IsReady) continue;
+        if (letters.Length > 0) letters.Append(',');
+        letters.Append(Json(d.Name.Substring(0, 1)));
+      }
+    } catch {}
+    usb = "[" + letters.ToString() + "]";
+    return usb;
+  }
 
   // Which of them the window in front is, as a JSON list of keys.
   static string Ai(IntPtr fg) {
     var title = new StringBuilder(512);
     GetWindowText(fg, title, 512);
-    if (fg != procOf) {
-      procOf = fg;
-      proc = "";
-      uint pid;
-      GetWindowThreadProcessId(fg, out pid);
-      try { proc = System.Diagnostics.Process.GetProcessById((int)pid).ProcessName.ToLowerInvariant(); } catch {}
-    }
+    Program(fg);
     string t = title.ToString();
     var keys = new StringBuilder();
     foreach (var ai in AIS) {
@@ -91,7 +136,9 @@ public static class CapriWindows {
     // the taskbar clicked: it comes up over her (Windows has no levels among windows on top)
     bool taskbar = fgClass.ToString() == "Shell_TrayWnd" || fgClass.ToString() == "Shell_SecondaryTrayWnd";
     sb.Append("{\"fg\":").Append(fg.ToInt64()).Append(",\"taskbar\":").Append(taskbar ? "true" : "false")
-      .Append(",\"ai\":").Append(Ai(fg)).Append(",\"wins\":[");
+      .Append(",\"ai\":").Append(Ai(fg))
+      .Append(",\"game\":").Append(game == "" ? "null" : Json(game))
+      .Append(",\"usb\":").Append(Usb()).Append(",\"wins\":[");
     int count = 0;
     EnumWindows((h, l) => {
       if (count >= 40) return false;

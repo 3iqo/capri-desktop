@@ -3,7 +3,9 @@
 // Feeds the overlay with the position of the other windows (Windows only), so Capri can
 // sit on them. A small PowerShell helper does the Win32 calls; we turn its physical pixels
 // into the overlay's coordinates. It also says when the window in front is another AI (ChatGPT,
-// Gemini…: `ai`, the names it matched), for her jealousy; it never passes on a title.
+// Gemini…: `ai`, the names it matched), for her jealousy, and never passes on a title; which game
+// is in front, if one (`game`, its folder in Steam's library or another launcher's); and the USB
+// sticks plugged in (`usb`, drive letters).
 
 const path = require('node:path');
 const readline = require('node:readline');
@@ -37,7 +39,10 @@ function startWindowWatch({ overlay, onUpdate }) {
       .map((w) => toOverlay(w, bounds))
       // only what overlaps Capri's screen
       .filter((w) => w.x < bounds.width && w.x + w.w > 0 && w.y < bounds.height && w.y + w.h > 0);
-    onUpdate({ fg: last.fg, taskbar: Boolean(last.taskbar), ai: Array.isArray(last.ai) ? last.ai : [], wins });
+    onUpdate({
+      fg: last.fg, taskbar: Boolean(last.taskbar), ai: Array.isArray(last.ai) ? last.ai : [],
+      game: last.game || null, usb: Array.isArray(last.usb) ? last.usb : [], wins,
+    });
   };
 
   const start = () => {

@@ -257,6 +257,21 @@ export const LINES = {
     },
     // passée sur ton autre écran pour te suivre
     screens: { hello: ['Coucou, l’autre écran.', 'Tu bosses ici maintenant ? J’arrive.', 'Me voilà.'] },
+    // elle réagit à ton PC (pc.js) : processeur, batterie, réseau, clé USB, jeu
+    pc: {
+      hot: ['Ton processeur est à fond. Moi aussi, je chauffe.', '{cpu} % de processeur. Il fait chaud là-dedans.', 'Ça chauffe ! Tu fais tourner quoi, là ?'],
+      cool: ['Ouf. Ça redescend.'],
+      low: ['Batterie à {level} %. Je vais pas tenir longtemps.', 'Plus que {level} % de batterie. Branche-moi, choom.'],
+      critical: ['{level} %… je m’éteins…', 'Batterie à {level} %. Dernier appel, choom.'],
+      charging: ['Ah, du jus. Merci.', 'Branchée. Je revis.'],
+      offline: ['Plus de réseau ! On est coupés du Net.', 'Connexion perdue. Je suis toute seule, là.'],
+      online: ['Réseau revenu. Le Net est à nous.', 'Reconnectée.'],
+      usb: ['Une clé USB ({drive}:) ? Je vais voir.', 'Oh, du nouveau ({drive}:). Je jette un œil.'],
+      usbBack: ['J’ai fait un tour dans ta clé. Rien de croustillant.', 'Ta clé USB est propre. Enfin, je crois.'],
+      usbOut: ['Ta clé est partie. Heureusement que j’étais sortie.'],
+      game: ['{game} ? Je te laisse jouer. Fais-moi honneur.', '{game}, hein ? Je me range, montre-leur.'],
+      gameBack: ['Alors, tu as gagné ?', 'Fini de jouer ? Raconte.'],
+    },
     // elle regarde ton écran (look.js) : ce qu'elle te dit avant, et quand ça ne marche pas
     look: {
       ask: 'Je peux jeter un œil à ton écran ?',
@@ -568,6 +583,21 @@ export const LINES = {
     },
     // over on your other screen, following you
     screens: { hello: ['Hi, other screen.', 'Working over here now? Coming.', 'There you are.'] },
+    // she reacts to your PC (pc.js): processor, battery, network, USB stick, game
+    pc: {
+      hot: ['Your processor is maxed out. I’m heating up too.', '{cpu}% CPU. It’s getting hot in here.', 'Things are heating up! What are you running?'],
+      cool: ['Phew. Cooling down.'],
+      low: ['Battery at {level}%. I won’t last long.', 'Only {level}% battery left. Plug me in, choom.'],
+      critical: ['{level}%… fading out…', 'Battery at {level}%. Last call, choom.'],
+      charging: ['Ah, power. Thanks.', 'Plugged in. I live again.'],
+      offline: ['No network! We’re cut off from the Net.', 'Connection lost. It’s just me now.'],
+      online: ['Network’s back. The Net is ours.', 'Reconnected.'],
+      usb: ['A USB stick ({drive}:)? Let me see.', 'Ooh, something new ({drive}:). Taking a look.'],
+      usbBack: ['Took a stroll through your stick. Nothing juicy.', 'Your USB stick is clean. I think.'],
+      usbOut: ['Your stick’s gone. Good thing I got out.'],
+      game: ['{game}? I’ll let you play. Make me proud.', '{game}, huh? I’ll get out of the way. Show them.'],
+      gameBack: ['So, did you win?', 'Done playing? Tell me everything.'],
+    },
     // she looks at your screen (look.js): what she tells you first, and when it doesn't work
     look: {
       ask: 'Can I take a look at your screen?',
@@ -875,6 +905,21 @@ export const LINES = {
     },
     // en tu otra pantalla, siguiéndote
     screens: { hello: ['Hola, otra pantalla.', '¿Ahora trabajas aquí? Voy.', 'Aquí estás.'] },
+    // reacciona a tu PC (pc.js): procesador, batería, red, USB, juego
+    pc: {
+      hot: ['Tu procesador va a tope. Yo también me caliento.', '{cpu} % de CPU. Aquí dentro hace calor.', '¡Esto se calienta! ¿Qué estás ejecutando?'],
+      cool: ['Uf. Ya baja.'],
+      low: ['Batería al {level} %. No aguantaré mucho.', 'Solo queda un {level} % de batería. Enchúfame, choom.'],
+      critical: ['{level} %… me apago…', 'Batería al {level} %. Última llamada, choom.'],
+      charging: ['Ah, energía. Gracias.', 'Enchufada. Revivo.'],
+      offline: ['¡Sin red! Nos han cortado la Red.', 'Conexión perdida. Estoy sola.'],
+      online: ['Volvió la red. La Red es nuestra.', 'Reconectada.'],
+      usb: ['¿Un USB ({drive}:)? Voy a ver.', 'Oh, algo nuevo ({drive}:). Echo un vistazo.'],
+      usbBack: ['Me di una vuelta por tu USB. Nada jugoso.', 'Tu USB está limpio. Creo.'],
+      usbOut: ['Se fue tu USB. Menos mal que salí.'],
+      game: ['¿{game}? Te dejo jugar. Hazme sentir orgullosa.', '{game}, ¿eh? Me aparto. Demuéstrales.'],
+      gameBack: ['¿Y bien, ganaste?', '¿Terminaste de jugar? Cuéntamelo todo.'],
+    },
     // mira tu pantalla (look.js): lo que te dice antes, y cuando no funciona
     look: {
       ask: '¿Puedo echarle un ojo a tu pantalla?',
@@ -1184,6 +1229,21 @@ export const LINES = {
     },
     // na sua outra tela, te seguindo
     screens: { hello: ['Oi, outra tela.', 'Trabalhando aqui agora? Tô indo.', 'Aí está você.'] },
+    // ela reage ao seu PC (pc.js): processador, bateria, rede, pendrive, jogo
+    pc: {
+      hot: ['Seu processador tá no talo. Eu também tô esquentando.', '{cpu} % de CPU. Tá quente aqui dentro.', 'Tá esquentando! O que você tá rodando?'],
+      cool: ['Ufa. Esfriando.'],
+      low: ['Bateria em {level} %. Não vou aguentar muito.', 'Só {level} % de bateria. Me liga na tomada, choom.'],
+      critical: ['{level} %… apagando…', 'Bateria em {level} %. Última chamada, choom.'],
+      charging: ['Ah, energia. Valeu.', 'Na tomada. Revivi.'],
+      offline: ['Sem rede! Cortaram a gente da Rede.', 'Conexão perdida. Tô sozinha aqui.'],
+      online: ['A rede voltou. A Rede é nossa.', 'Reconectada.'],
+      usb: ['Um pendrive ({drive}:)? Deixa eu ver.', 'Opa, coisa nova ({drive}:). Vou dar uma olhada.'],
+      usbBack: ['Dei uma volta no seu pendrive. Nada de interessante.', 'Seu pendrive tá limpo. Acho.'],
+      usbOut: ['Seu pendrive foi embora. Ainda bem que eu saí.'],
+      game: ['{game}? Vou te deixar jogar. Me dá orgulho.', '{game}, é? Vou sair da frente. Mostra pra eles.'],
+      gameBack: ['E aí, ganhou?', 'Acabou de jogar? Me conta tudo.'],
+    },
     // ela olha sua tela (look.js): o que ela te diz antes, e quando não dá certo
     look: {
       ask: 'Posso dar uma olhada na sua tela?',
@@ -1495,6 +1555,21 @@ export const LINES = {
     },
     // на твоём другом экране, следом за тобой
     screens: { hello: ['Привет, другой экран.', 'Теперь работаешь тут? Иду.', 'Вот ты где.'] },
+    // она реагирует на твой ПК (pc.js): процессор, батарея, сеть, флешка, игра
+    pc: {
+      hot: ['Твой процессор на пределе. Я тоже нагреваюсь.', 'Процессор на {cpu} %. Жарко тут.', 'Горячо! Что там у тебя запущено?'],
+      cool: ['Фух. Остывает.'],
+      low: ['Батарея {level} %. Долго я не протяну.', 'Осталось {level} % батареи. Подключи меня, чумба.'],
+      critical: ['{level} %… отключаюсь…', 'Батарея {level} %. Последний звонок, чумба.'],
+      charging: ['О, энергия. Спасибо.', 'Подключена. Я снова живу.'],
+      offline: ['Нет сети! Нас отрезали от Сети.', 'Связь потеряна. Я тут совсем одна.'],
+      online: ['Сеть вернулась. Сеть наша.', 'Снова на связи.'],
+      usb: ['Флешка ({drive}:)? Сейчас гляну.', 'О, что-то новенькое ({drive}:). Посмотрю.'],
+      usbBack: ['Прогулялась по твоей флешке. Ничего интересного.', 'Флешка чистая. Вроде бы.'],
+      usbOut: ['Флешку вынули. Хорошо, что я успела выйти.'],
+      game: ['{game}? Не буду мешать. Покажи им.', '{game}, да? Ухожу с дороги. Порви их.'],
+      gameBack: ['Ну что, победа?', 'Всё, игра окончена? Рассказывай.'],
+    },
     // она смотрит на твой экран (look.js): что она говорит заранее и когда не выходит
     look: {
       ask: 'Можно взглянуть на твой экран?',

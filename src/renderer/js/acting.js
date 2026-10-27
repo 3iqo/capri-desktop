@@ -526,6 +526,34 @@ export const ACTS = {
     ],
   },
 
+  // ---- your PC (pc.js) ----
+
+  // overheating with your processor: head thrown back, fanning herself with one hand, heat coming
+  // off her ('steam'), then a slump
+  overheat: {
+    priority: 2,
+    keys: [
+      [2, { head: -0.08, mane: 0.3, armL: -0.3, armR: 1.25, tilt: -1 }, 'steam'],
+      [2, { head: -0.1, mane: 0.36, armL: -0.3, armR: 0.82, tilt: -1.5 }],
+      ...rep(4, [[2, { head: -0.08, mane: 0.32, armL: -0.3, armR: 1.25, tilt: -1 }, 'steam'], [2, { head: -0.1, mane: 0.38, armL: -0.3, armR: 0.82, tilt: -1.5 }]]),
+      [8, { head: 0.08, mane: 0.06, armL: -0.42, armR: -0.4, bob: 3 }],
+      [1, {}],
+    ],
+  },
+
+  // the battery running out: she sags, head down, arms hanging, mane flat
+  drained: {
+    priority: 2,
+    keys: [
+      [3, { head: 0.12, mane: -0.12, arms: -0.3, bob: 2 }],
+      [14, { head: 0.24, mane: -0.26, arms: -0.55, bob: 6, sy: 0.96, sx: 1.02 }],
+      [1, { head: 0.08, mane: -0.1, arms: -0.2, bob: 1, smear: [0, 8] }], // a start
+      [10, { head: 0.2, mane: -0.22, arms: -0.5, bob: 5 }],
+      [2, { head: 0.1, arms: -0.2 }],
+      [1, {}],
+    ],
+  },
+
   // ---- jealous (bond.js) ----
 
   // glaring at you over another AI: she snaps to it, leans in, mane bristling, holds it, and hisses

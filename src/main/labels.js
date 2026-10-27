@@ -22,6 +22,7 @@ const TRAY = {
     reminders: 'Rappels', noReminders: 'Aucun rappel (demande-lui dans son chat)', cancelReminder: 'Annuler ce rappel',
     follow: 'Me suivre d’un écran à l’autre', jealous: 'Jalouse des autres IA',
     lookNow: 'Regarde mon écran', lookAuto: 'Regarder mon écran de temps en temps',
+    pcReact: 'Réagir à mon PC',
   },
   en: {
     name: 'English',
@@ -41,6 +42,7 @@ const TRAY = {
     reminders: 'Reminders', noReminders: 'No reminders (ask her in her chat)', cancelReminder: 'Cancel this reminder',
     follow: 'Follow me across screens', jealous: 'Jealous of other AIs',
     lookNow: 'Look at my screen', lookAuto: 'Look at my screen now and then',
+    pcReact: 'React to my PC',
   },
   es: {
     name: 'Español',
@@ -60,6 +62,7 @@ const TRAY = {
     reminders: 'Recordatorios', noReminders: 'Ningún recordatorio (pídeselo en su chat)', cancelReminder: 'Cancelar este recordatorio',
     follow: 'Seguirme de una pantalla a otra', jealous: 'Celosa de otras IA',
     lookNow: 'Mira mi pantalla', lookAuto: 'Mirar mi pantalla de vez en cuando',
+    pcReact: 'Reaccionar a mi PC',
   },
   pt: {
     name: 'Português (Brasil)',
@@ -79,6 +82,7 @@ const TRAY = {
     reminders: 'Lembretes', noReminders: 'Nenhum lembrete (peça no chat dela)', cancelReminder: 'Cancelar este lembrete',
     follow: 'Me seguir de uma tela pra outra', jealous: 'Com ciúmes de outras IAs',
     lookNow: 'Olha minha tela', lookAuto: 'Olhar minha tela de vez em quando',
+    pcReact: 'Reagir ao meu PC',
   },
   ru: {
     name: 'Русский',
@@ -98,6 +102,7 @@ const TRAY = {
     reminders: 'Напоминания', noReminders: 'Напоминаний нет (попроси в её чате)', cancelReminder: 'Отменить напоминание',
     follow: 'Следовать за мной с экрана на экран', jealous: 'Ревнует к другим ИИ',
     lookNow: 'Посмотри на мой экран', lookAuto: 'Иногда смотреть на мой экран',
+    pcReact: 'Реагировать на мой ПК',
   },
 };
 
