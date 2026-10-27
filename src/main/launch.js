@@ -7,6 +7,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawn, execFile } = require('node:child_process');
+const { randomUUID } = require('node:crypto');
 const { app, shell } = require('electron');
 const { powershell } = require('./apps');
 
@@ -257,6 +258,29 @@ async function youtube(query) {
   return { title: video?.title || null };
 }
 
+// A Roblox game by its name ("steal a brain rot"): the first one Roblox's own search gives, started
+// straight in the Roblox app through its roblox:// link, or its page in the browser without the app.
+// { name, app } of what it started, { name: null } if Roblox found nothing.
+async function roblox(query) {
+  const q = String(query || '').trim().slice(0, 100);
+  if (!q) return null;
+  let game = null;
+  try {
+    const url = `https://apis.roblox.com/search-api/omni-search?searchQuery=${encodeURIComponent(q)}&pageType=all&sessionId=${randomUUID()}`;
+    const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
+    const body = await res.json();
+    game = (body.searchResults || []).filter((r) => r.contentGroupType === 'Game').flatMap((r) => r.contents || [])[0] || null;
+  } catch {
+    return null;
+  }
+  if (!game?.rootPlaceId) return { name: null };
+  const installed = Boolean(app.getApplicationNameForProtocol('roblox://'));
+  await shell.openExternal(installed ? `roblox://experiences/start?placeId=${game.rootPlaceId}` : `https://www.roblox.com/games/${game.rootPlaceId}`);
+  // "[💀] Steal a Brainrot" is "Steal a Brainrot"
+  const name = String(game.name).replace(/\[[^\]]*\]\s*/g, '').replace(/[\p{Extended_Pictographic}️]/gu, '').trim();
+  return { name: name || game.name, app: installed };
+}
+
 // A website: http or https, with a real host name.
 function siteUrl(address) {
   try {
@@ -274,4 +298,4 @@ async function site(address) {
   return true;
 }
 
-module.exports = { launchables, match, find, launch, media, music, youtube, site, siteUrl, risky };
+module.exports = { launchables, match, find, launch, media, music, youtube, roblox, site, siteUrl, risky };

@@ -176,6 +176,8 @@ panel says so every time.
   your PC.
 - **Searching the web** ("search the weather in Paris on Google") and **taking a screenshot** ("take a screenshot":
   without her in it, saved in Pictures › Screenshots). She knows the date and time, too.
+- **A Roblox game by its name** ("start Steal a Brainrot on Roblox", "in my roblox play grow a garden"): she finds
+  it on Roblox and drops you straight into it (or opens its page if Roblox isn't installed).
 - **Music**: "pause", "next", "louder", "mute"… press the media keys, so it works with Spotify and most players, right
   as you send it. "Play Bohemian Rhapsody" or "put some Daft Punk on YouTube" opens the right video on YouTube,
   straight away (not a search). "Play whatever you want": she picks. "Put Daft Punk on Spotify" opens Spotify on a

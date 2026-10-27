@@ -80,6 +80,22 @@ const NOT_SEARCHED = new Set(('stp svp please pls peux tu can you could would pu
   + 'файлы папка папку appelé appelée nommé called named llamado chamado qui s appelle est sont is are where où cherche recherche '
   + 'trouve retrouve search find look up busca encuentra procura acha найди поищи где dónde onde google internet web online ligne').split(' '));
 const searched = (text) => text.replace(/^\s*capri[,!:]?\s+/i, '').toLowerCase().split(/[^\p{L}\p{N}.]+/u).filter((w) => w && !NOT_SEARCHED.has(w)).join(' ');
+// a Roblox game by its name: "in my roblox play steal a brain rot", "lance grow a garden sur roblox"
+const ROBLOX_VERB = /(?:^|\s)(?:play|joue(?:r)?(?: à| a)?|lance|launch|start|ouvre|open|mets|go to|va sur|juega(?: a)?|jogue|jogar|запусти|включи)\s+/gi;
+function robloxGame(text) {
+  if (!/roblox/i.test(text)) return null;
+  let rest = null;
+  for (const m of text.matchAll(ROBLOX_VERB)) rest = text.slice(m.index + m[0].length); // after the last verb
+  if (!rest) return null;
+  const name = rest
+    .replace(/\s+(?:on|in|sur|dans|en|no|na|в)\s+(?:my\s+|mon\s+|mi\s+|meu\s+)?roblox\b.*$/i, '')
+    .replace(/\broblox\b/ig, '')
+    .replace(/^(?:à|a|au|to|le jeu|the game|un jeu|el juego|o jogo)\s+/i, '')
+    .replace(/\s+(?:stp|svp|please|pls|por favor)\b.*$/i, '')
+    .replace(/[\s.!?,]+$/, '')
+    .trim();
+  return name.length >= 2 ? name : null;
+}
 // "regarde mon écran", "tu vois quoi ?", "what's on my screen?", "что ты видишь?"
 const LOOK_ASK = /regarde (?:mon|l['’]|ce que)|(?:jette|jeter) un (?:œil|oeil)|tu vois quoi|qu['’]est[- ]ce que tu vois|look at (?:my|the|this) screen|what(?:'s| is) on my screen|what do you see|take a look|mira (?:mi|la) pantalla|qu[ée] ves|olha (?:minha|a) tela|o que voc[êe] v[êe]|посмотри на (?:мой )?экран|что ты видишь/i;
 // what her tag needs to find in your message before it does anything: a small model tags answers about
@@ -374,6 +390,8 @@ export class Chat {
     if (memo) return { kind: 'memo', text: memo };
     if (this.look && LOOK_ASK.test(text)) return { kind: 'look' };
     if (SHOT_ASK.test(text)) return { kind: 'shot' };
+    const roblox = robloxGame(text);
+    if (roblox) return { kind: 'roblox', game: roblox };
     if (SEARCH_VERB.test(text) && WEB_WORD.test(text) && searched(text)) return { kind: 'web', query: searched(text) };
     if (SEARCH_VERB.test(text) && FILE_WORD.test(text) && searched(text)) return { kind: 'files', query: searched(text) };
     const media = MEDIA_ASK.find(([, re]) => re.test(text))?.[0];
@@ -430,6 +448,13 @@ export class Chat {
       return (await this.host.music(asked.song)) ? { line: fmt(t.music, { song: asked.song }), face: 'laugh' } : null;
     }
     if (asked.kind === 'youtube') return this.youtube(asked.song);
+    if (asked.kind === 'roblox') {
+      this.zap();
+      const res = await this.host.roblox(asked.game);
+      if (!res) return null;
+      if (!res.name) return { line: fmt(t.robloxNone, { game: asked.game }), face: 'aside' };
+      return { line: fmt(res.app ? t.robloxPlay : t.robloxPage, { game: res.name }), face: 'laugh' };
+    }
     if (asked.kind === 'web') {
       this.zap();
       return (await this.host.webSearch(asked.query)) ? { line: fmt(t.web, { query: asked.query }), face: 'smug' } : null;
@@ -679,7 +704,7 @@ export class Chat {
       const soon = this.reminders.upcoming.slice(0, 6);
       if (soon.length) lines.push(`Reminders you're keeping for them: ${soon.map((r) => `${clock(r.at, this.brain.lang)}${r.text ? ` (${r.text})` : ''}`).join('; ')}.`);
     }
-    lines.push('Your system also searches the user\'s files when they ask you to find one, searches the web when they ask, and takes screenshots: what it found shows under your answer, so never make up file names or results.');
+    lines.push('Your system also searches the user\'s files when they ask you to find one, searches the web when they ask, takes screenshots, and starts Roblox games by name: what it did shows under your answer, so never make up file names or results.');
     lines.push('Apart from that, you can\'t see the user\'s screen or files, and you can\'t touch anything else on their PC (settings, files): if asked, say plainly that you can\'t, in character, and don\'t pretend to.');
     return lines;
   }

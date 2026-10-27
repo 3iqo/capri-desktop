@@ -185,6 +185,8 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
   dossier. Rien ne sort de ton PC.
 - **Chercher sur le web** (« cherche la météo de Paris sur Google ») et **faire une capture d'écran** (« fais une
   capture d'écran » : sans elle dessus, rangée dans Images › Screenshots). Elle sait aussi la date et l'heure.
+- **Un jeu Roblox par son nom** (« lance Steal a Brainrot sur Roblox », « in my roblox play grow a garden ») : elle le
+  trouve sur Roblox et te lance directement dedans (ou ouvre sa page si Roblox n'est pas installé).
 - **La musique** : « pause », « suivante », « plus fort », « coupe le son »… appuient sur les touches multimédia, donc
   ça marche avec Spotify et la plupart des lecteurs, dès que tu envoies. « Mets Bohemian Rhapsody » ou « mets-moi du
   Daft Punk sur YouTube » ouvre le bon clip sur YouTube, directement (pas une recherche). « Mets la musique que tu
