@@ -171,6 +171,11 @@ panel says so every time.
 - **Your folders and your desktop**: "open my downloads", "open File Explorer", "open the recycle bin", or a file,
   folder or shortcut on your desktop, by its name. Anything that would run a program or a script (.exe, .bat, .ps1…)
   always goes behind a button.
+- **Finding your files** ("find my resume", "where's the contract pdf?"): across your whole user folder, by name and by
+  what's in them (with Windows' search index), with buttons to open what she found or show its folder. Nothing leaves
+  your PC.
+- **Searching the web** ("search the weather in Paris on Google") and **taking a screenshot** ("take a screenshot":
+  without her in it, saved in Pictures › Screenshots). She knows the date and time, too.
 - **Music**: "pause", "next", "louder", "mute"… press the media keys, so it works with Spotify and most players, right
   as you send it. "Play Bohemian Rhapsody" or "put some Daft Punk on YouTube" opens the right video on YouTube,
   straight away (not a search). "Play whatever you want": she picks. "Put Daft Punk on Spotify" opens Spotify on a
@@ -481,6 +486,7 @@ src/renderer/js/
   bond.js                how close she is to you, growing over time, and her jealousy of other AIs
   look.js                she looks at your screen: asking first, the scan, what her AI says about it
   pc.js                  your PC as she feels it: the processor, the battery, the network, USB sticks, games
+  files.js               finding your files (Windows search index), screenshots
   lines.js               what she says (FR / EN / ES / PT / RU)
   chip.js                her mask: while she sleeps, and bottom left when you put her away
   voice.js               the sounds

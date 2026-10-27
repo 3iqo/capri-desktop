@@ -46,17 +46,38 @@ const MUSIC_WORD = /musi|chanson|song|track|titre|morceau|spotify|canci|faixa|п
 const SPOTIFY_ASK = /(?:play|put on|put|mets|joue|lance|écoute|pon|toca|reproduce|coloca|toque|включи|поставь)\s+(?:moi\s+|me\s+)?(.+?)\s+(?:on|sur|en|no|na|в)\s+spotify/i;
 const MEDIA_ACTIONS = new Set(MEDIA_ASK.map(([action]) => action));
 // "mets Bohemian Rhapsody sur YouTube", "play Daft Punk on youtube"
-const YOUTUBE_ASK = /(?:play|put on|put|mets|joue|lance|écoute|pon|toca|reproduce|coloca|bota|toque|включи|поставь)(?:[- ]moi|[- ]me|me)?\s+(.+?)\s+(?:on|sur|en|no|na|в)\s+youtube/i;
+const YOUTUBE_ASK = /(?:play|put on|put|mets|met|joue|lance|écoute|pon|toca|reproduce|coloca|bota|toque|включи|поставь)(?:[- ]moi|[- ]me|me)?\s+(.+?)\s+(?:on|sur|en|no|na|в)\s+youtube/i;
 // "mets Bohemian Rhapsody", "joue-moi du Daft Punk", "play some Queen": a song, or a game to play
-const PLAY_ASK = /^(?:capri,?\s+)?(?:mets|joue|play|put on|pon|toca|coloca|bota|toque|включи|поставь)(?:[- ]moi|[- ]me|me)?\s+(.{2,100})$/iu;
+const PLAY_ASK = /^(?:capri,?\s+)?(?:mets|met|joue|play|put on|pon|toca|coloca|bota|toque|включи|поставь)(?:[- ]moi|[- ]me|me)?\s+(.{2,100})$/iu;
 // "joue à Brawlhalla", "play the game…": a game, not a song
 const GAME_ASK = /^(?:capri,?\s+)?(?:joue|play)\s+(?:à|au|aux|a|the game)\s/i;
 // "du Daft Punk", "some Queen": who to play, without the "some"
-const songOf = (s) => s.replace(/^(?:du|de la|de l['’]|des|some|un peu de|del|un poco de|algo de|um pouco de)\s+/i, '').trim();
+const songOf = (s) => s
+  .replace(/^(?:la |le |une? |the |some )?(?:musique|music|chanson|son|morceau|song|track|songs)\s+(?:de |d['’]|du |by |of )?/i, '')
+  .replace(/^(?:du|de la|de l['’]|des|some|un peu de|del|un poco de|algo de|um pouco de)\s+/i, '')
+  .replace(/\s+(?:on|sur|en|no|na|в)\s+youtube\s*$/i, '')
+  .trim();
+// "démarre YouTube et mets la musique de Daft Punk": the song asked for after an "and"
+const PLAY_AFTER = /\s(?:et|and|y|e|и)\s+(?:mets|met|joue|play|put on|pon|toca|coloca|bota|включи|поставь)(?:[- ]moi|[- ]me)?\s+(.{2,100})$/i;
 // "mets ce que tu veux", "play whatever you want": she picks (her tag)
 const HER_PICK = /tu veux|ton choix|surprends|you want|whatever|your choice|surprise me|quieras|tu elecci[óo]n|quiser|sua escolha|хочешь|на твой выбор/i;
 // what's left when it doesn't say which song ("mets de la musique", "play something")
 const VAGUE_SONG = /^(?:(?:de\s+la|du|des|la|le|les|une?|some|a|the|un|algo\s+de|alguma|um|uma|что-нибудь)\s+)?(?:musique|music|son|sons|chanson|morceau|truc|quelque\s+chose|something|song|tunes?|m[úu]sica|canci[óo]n|algo|coisa|музыку|песню)?\s*[.!?]*$/iu;
+// "trouve mon CV", "où est le pdf du contrat", "find my report", "найди файл…": her search verbs, and
+// what makes it a file on your PC or a search on the web
+const SEARCH_VERB = /(?:cherche|recherche|trouve|retrouve|où (?:est|sont)|search(?: for)?|find|look (?:for|up)|where(?:'s| is| are)|busca|encuentra|d[óo]nde est[áa]n?|procura|acha|onde est[áa]o?|найди|поищи|где)/i;
+const FILE_WORD = /fichier|dossier|document|photo|image|vid[ée]o|\bpdf\b|\bfiles?\b|folder|archivo|carpeta|arquivo|pasta|файл|папк|\.\w{2,4}\b|sur mon (?:pc|ordi)|dans mes fichiers|on my (?:pc|computer)|en mi (?:pc|ordenador)|no meu (?:pc|computador)|на (?:компьютере|пк)/i;
+const WEB_WORD = /google|internet|\ble web\b|the web|\bonline\b|en ligne|в интернете|в гугле/i;
+// "fais une capture d'écran", "take a screenshot"
+const SHOT_ASK = /capture d['’][ée]cran|screenshot|screen ?shot|captura de (?:pantalla|tela)|скриншот|снимок экрана/i;
+// the words that aren't what to look for
+const NOT_SEARCHED = new Set(('stp svp please pls peux tu can you could would puedes pode можешь moi me le la les l mon ma mes '
+  + 'un une des du de d the my a an for of el mi mis o meu minha meus мой мою мои sur dans on in en no na на в pc ordi ordinateur '
+  + 'computer ordenador computador компьютере fichier fichiers dossier dossiers document documents photo photos image images '
+  + 'vidéo vidéos video videos file files folder folders archivo archivos carpeta carpetas arquivo arquivos pasta pastas файл '
+  + 'файлы папка папку appelé appelée nommé called named llamado chamado qui s appelle est sont is are where où cherche recherche '
+  + 'trouve retrouve search find look up busca encuentra procura acha найди поищи где dónde onde google internet web online ligne').split(' '));
+const searched = (text) => text.replace(/^\s*capri[,!:]?\s+/i, '').toLowerCase().split(/[^\p{L}\p{N}.]+/u).filter((w) => w && !NOT_SEARCHED.has(w)).join(' ');
 // "regarde mon écran", "tu vois quoi ?", "what's on my screen?", "что ты видишь?"
 const LOOK_ASK = /regarde (?:mon|l['’]|ce que)|(?:jette|jeter) un (?:œil|oeil)|tu vois quoi|qu['’]est[- ]ce que tu vois|look at (?:my|the|this) screen|what(?:'s| is) on my screen|what do you see|take a look|mira (?:mi|la) pantalla|qu[ée] ves|olha (?:minha|a) tela|o que voc[êe] v[êe]|посмотри на (?:мой )?экран|что ты видишь/i;
 // what her tag needs to find in your message before it does anything: a small model tags answers about
@@ -350,6 +371,9 @@ export class Chat {
     const memo = MEMO_ASK.exec(text)?.[1]?.trim();
     if (memo) return { kind: 'memo', text: memo };
     if (this.look && LOOK_ASK.test(text)) return { kind: 'look' };
+    if (SHOT_ASK.test(text)) return { kind: 'shot' };
+    if (SEARCH_VERB.test(text) && WEB_WORD.test(text) && searched(text)) return { kind: 'web', query: searched(text) };
+    if (SEARCH_VERB.test(text) && FILE_WORD.test(text) && searched(text)) return { kind: 'files', query: searched(text) };
     const media = MEDIA_ASK.find(([, re]) => re.test(text))?.[0];
     if (media && (count <= 5 || MUSIC_WORD.test(text))) return { kind: 'media', action: media };
     const song = SPOTIFY_ASK.exec(text)?.[1];
@@ -359,9 +383,11 @@ export class Chat {
     const app = this.askedToClose(text);
     if (app) return { kind: 'close', name: app };
     if (GAME_ASK.test(text) && count <= 8) return { kind: 'open', text };
+    const after = PLAY_AFTER.exec(text.trim())?.[1];
+    if (after && !VAGUE_SONG.test(after) && !HER_PICK.test(after)) return { kind: 'play', song: songOf(after.replace(/[\s.!?]+$/, '')) };
     const play = PLAY_ASK.exec(text.trim())?.[1];
     if (play && !VAGUE_SONG.test(play) && !HER_PICK.test(play)) return { kind: 'play', song: songOf(play.replace(/[\s.!?]+$/, '')) };
-    if (OPEN_ASK.test(text) && count <= 8) return { kind: 'open', text };
+    if (OPEN_ASK.test(text) && count <= 14) return { kind: 'open', text };
     return null;
   }
 
@@ -398,10 +424,29 @@ export class Chat {
       return (await this.host.music(asked.song)) ? { line: fmt(t.music, { song: asked.song }), face: 'laugh' } : null;
     }
     if (asked.kind === 'youtube') return this.youtube(asked.song);
+    if (asked.kind === 'web') {
+      this.zap();
+      return (await this.host.webSearch(asked.query)) ? { line: fmt(t.web, { query: asked.query }), face: 'smug' } : null;
+    }
+    if (asked.kind === 'files') {
+      const results = await this.host.searchFiles(asked.query);
+      if (!results.length) return { line: fmt(t.filesNone, { query: asked.query }), face: 'aside' };
+      const list = results.slice(0, 3).map((f) => `${f.name} (${f.folder})`).join(', ');
+      return { line: fmt(results.length === 1 ? t.fileFound : t.filesFound, { count: results.length, list }), face: 'smug', files: results };
+    }
+    if (asked.kind === 'shot') {
+      // not her nor her panel in it
+      document.documentElement.style.visibility = 'hidden';
+      await new Promise((r) => setTimeout(r, 180));
+      const shot = await this.host.screenshot();
+      document.documentElement.style.visibility = '';
+      this.voice.play('tick');
+      return shot ? { line: fmt(t.shot, { name: shot.name }), face: 'smug', files: [shot] } : null;
+    }
     if (asked.kind === 'play') {
       // "joue à Brawlhalla" is a game; anything else, a song
       const game = await this.host.findLaunch(asked.song);
-      if (game && ['steam', 'epic', 'app'].includes(game.kind)) return this.open(game);
+      if (game && ['steam', 'epic', 'app'].includes(game.kind)) return this.openNow(game);
       return this.youtube(asked.song);
     }
     const item = await this.host.findLaunch(asked.text);
@@ -411,11 +456,11 @@ export class Chat {
       return (await this.host.openSite(site.url)) ? { line: fmt(t.siteOpened, { site: site.name }), face: 'laugh' } : null;
     }
     if (!item) return null; // nothing by that name here: her tag may still say what you meant
-    return this.open(item);
+    return this.openNow(item);
   }
 
   // An app, a game, a file or a folder: opened, or behind a button when it would run something.
-  async open(item) {
+  async openNow(item) {
     if (item.risky) return { offer: item };
     this.zap();
     const res = await this.host.launch(item);
@@ -453,6 +498,19 @@ export class Chat {
       return undefined;
     }
     if (done?.offer) return this.launch(done.offer, answer); // it would run something: your click first
+    if (done?.files) {
+      // what she found (or the screenshot): a button to open the first, and to see where it is
+      this.addLine(answer, done.line, done.face);
+      const [first, second] = done.files;
+      const actions = [{ id: 'open', label: fmt(t.openIt, { app: first.name }), primary: true }];
+      if (second) actions.push({ id: 'second', label: fmt(t.openIt, { app: second.name }) });
+      actions.push({ id: 'folder', label: t.showFolder });
+      this.panel.setActions(actions, (id) => {
+        if (id === 'folder') return this.host.openFile(first.path, true);
+        return this.host.openFile((id === 'second' ? second : first).path);
+      });
+      return undefined;
+    }
     if (done) return this.addLine(answer, done.line, done.face);
     if (asked?.kind === 'remind') return undefined; // no time said: her answer asks when
     if (asked?.kind === 'close') return this.offerClose(asked.name, answer);
@@ -611,6 +669,7 @@ export class Chat {
       const soon = this.reminders.upcoming.slice(0, 6);
       if (soon.length) lines.push(`Reminders you're keeping for them: ${soon.map((r) => `${clock(r.at, this.brain.lang)}${r.text ? ` (${r.text})` : ''}`).join('; ')}.`);
     }
+    lines.push('Your system also searches the user\'s files when they ask you to find one, searches the web when they ask, and takes screenshots: what it found shows under your answer, so never make up file names or results.');
     lines.push('Apart from that, you can\'t see the user\'s screen or files, and you can\'t touch anything else on their PC (settings, files): if asked, say plainly that you can\'t, in character, and don\'t pretend to.');
     return lines;
   }
@@ -677,6 +736,7 @@ export class Chat {
       watching
         ? `You live on the user's desktop as a small glitchy figure and keep an eye on ${assistant}, their AI coding assistant, for them. Only talk about ${assistant} when the user asks about it or about their work.`
         : 'You live on the user\'s desktop as a small glitchy figure and keep them company.',
+      `Right now it's ${new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())}, the user's time.`,
       'You love the satellite that crosses the night sky and dream of reaching it, but bring it up only once in a while, never in every answer. Talk about what the user talks about.',
       'How you talk: playful, a little mischievous and teasing, warm underneath, never cruel. Night City slang now and then (choom, preem, nova, gonk, flatline), not in every sentence.',
       'Rules: keep it short, one to three sentences of plain text, no markdown, no lists, no emoji. Stay in character.',

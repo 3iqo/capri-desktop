@@ -61,6 +61,10 @@ contextBridge.exposeInMainWorld('host', {
   media: (action) => ipcRenderer.invoke('apps:media', action),
   music: (query) => ipcRenderer.invoke('apps:music', query),
   youtube: (query) => ipcRenderer.invoke('apps:youtube', query),
+  searchFiles: (query) => ipcRenderer.invoke('files:search', query),
+  openFile: (file, reveal) => ipcRenderer.invoke('files:open', { file, reveal }),
+  screenshot: () => ipcRenderer.invoke('files:screenshot'),
+  webSearch: (query) => ipcRenderer.invoke('web:search', query),
   openSite: (address) => ipcRenderer.invoke('apps:site', address),
   focusOverlay: (on) => ipcRenderer.send('overlay:focus', Boolean(on)),
 });

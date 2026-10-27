@@ -19,6 +19,7 @@ const ollama = require('./ollama');
 const setup = require('./setup');
 const apps = require('./apps');
 const launch = require('./launch');
+const files = require('./files');
 const { ASSISTANTS, assistant } = require('./assistants');
 const activeAssistant = () => assistant(config.load().assistant); // Claude Code or Codex
 const activeHooks = () => activeAssistant().hooks;
@@ -784,6 +785,15 @@ function registerIpc() {
     return item && { ...item, risky: launch.risky(item) }; // a program or a script: behind a button
   });
   ipcMain.handle('apps:youtube', (_e, query) => launch.youtube(query).catch(() => null));
+  // your files (files.js): a search, opening what it found, a screenshot, a search on the web
+  ipcMain.handle('files:search', (_e, query) => files.search(query).catch(() => []));
+  ipcMain.handle('files:open', (_e, { file, reveal }) => files.open(String(file), { reveal: Boolean(reveal) }).then(() => true, () => false));
+  ipcMain.handle('files:screenshot', () => files.screenshot(targetDisplay()).catch(() => null));
+  ipcMain.handle('web:search', (_e, query) => {
+    const q = String(query || '').trim().slice(0, 300);
+    if (!q) return false;
+    return shell.openExternal(`https://www.google.com/search?q=${encodeURIComponent(q)}`).then(() => true, () => false);
+  });
   ipcMain.handle('apps:launch', (_e, item) => launch.launch(item).then(() => ({ ok: true }), (err) => ({ ok: false, error: err.message })));
   ipcMain.handle('apps:media', (_e, action) => launch.media(action));
   ipcMain.handle('apps:music', (_e, query) => launch.music(query).catch(() => false));

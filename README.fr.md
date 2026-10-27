@@ -180,6 +180,11 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
 - **Tes dossiers et ton bureau** : « ouvre mes téléchargements », « ouvre l'explorateur de fichiers », « ouvre la
   corbeille », ou un fichier, un dossier ou un raccourci posé sur ton bureau, par son nom. Ce qui lancerait un programme
   ou un script (.exe, .bat, .ps1…) passe toujours par un bouton.
+- **Chercher tes fichiers** (« trouve mon CV », « où est le pdf du contrat ? ») : dans tout ton dossier utilisateur, par
+  nom et par contenu (avec l'index de recherche de Windows), avec des boutons pour ouvrir ce qu'elle a trouvé ou voir le
+  dossier. Rien ne sort de ton PC.
+- **Chercher sur le web** (« cherche la météo de Paris sur Google ») et **faire une capture d'écran** (« fais une
+  capture d'écran » : sans elle dessus, rangée dans Images › Screenshots). Elle sait aussi la date et l'heure.
 - **La musique** : « pause », « suivante », « plus fort », « coupe le son »… appuient sur les touches multimédia, donc
   ça marche avec Spotify et la plupart des lecteurs, dès que tu envoies. « Mets Bohemian Rhapsody » ou « mets-moi du
   Daft Punk sur YouTube » ouvre le bon clip sur YouTube, directement (pas une recherche). « Mets la musique que tu
@@ -505,6 +510,7 @@ src/renderer/js/
   bond.js                son lien avec toi, qui grandit, et sa jalousie des autres IA
   look.js                elle regarde ton écran : la permission, le scan, ce que son IA en dit
   pc.js                  ton PC comme elle le sent : processeur, batterie, réseau, clés USB, jeux
+  files.js               chercher tes fichiers (l'index de recherche de Windows), les captures d'écran
   lines.js               ce qu'elle dit (FR / EN / ES / PT / RU)
   chip.js                son masque : quand elle dort, et en bas à gauche quand tu la ranges
   voice.js               les sons
