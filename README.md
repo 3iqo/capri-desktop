@@ -174,7 +174,14 @@ panel says so every time.
   away) with **Done** and **10 more min**. If she was off at the time, she brings it up when she's back. Her menu ›
   **Reminders** lists them, and each one can be cancelled there.
 
-Nothing else: she can't see your screen or your files.
+Nothing else: she can't see your files, nor your screen unless you ask her to.
+
+**She looks at your screen**, if you want. Her menu › **Look at my screen**: her eyes go to the window in front, a
+scanline sweeps it, and she tells you what she makes of it, her way. **Look at my screen now and then** lets her do it
+on her own, every 8 to 15 minutes, when you're there and you've switched windows (off until you tick it). The first
+time, she tells you where the picture goes: to her chat's AI. With an AI on your PC, nothing leaves it; with an online
+one, the picture goes to that service. She never keeps the picture, and her chat remembers what she said for a while.
+It takes a model that can read pictures: gemma3 on your PC, Gemini or OpenAI online (not llama3.2, she'll tell you).
 
 ### Make her yours
 
@@ -376,6 +383,9 @@ reminders and where you two stand.
 The title of the window in front of you is only checked, on your PC, against a list of AI names (for her jealousy):
 it's never kept or sent anywhere.
 
+When she looks at your screen (only when you ask, or if you ticked *Look at my screen now and then*), a picture of the
+screen goes to her chat's AI: on your PC with Ollama, to the online service otherwise. It's never written to disk.
+
 ## Art direction
 
 The goal: she should feel like she stepped out of the anime, not like a widget.
@@ -456,6 +466,7 @@ src/renderer/js/
   chat.js                talking to her: the conversation, who she is, her answers coming in
   reminders.js           reminders: reading them off your message, keeping them, when they come due
   bond.js                how close she is to you, growing over time, and her jealousy of other AIs
+  look.js                she looks at your screen: asking first, the scan, what her AI says about it
   lines.js               what she says (FR / EN / ES / PT / RU)
   chip.js                her mask: while she sleeps, and bottom left when you put her away
   voice.js               the sounds

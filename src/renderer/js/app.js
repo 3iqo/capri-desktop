@@ -11,6 +11,7 @@ import { Setup } from './setup.js';
 import { Custom } from './custom.js';
 import { Bond, Jealousy } from './bond.js';
 import { Reminders, clock } from './reminders.js';
+import { Look } from './look.js';
 import { linesFor } from './lines.js';
 import { pick, fmt, reducedMotion } from './util.js';
 
@@ -245,6 +246,9 @@ async function boot() {
   const reminders = new Reminders({ host, list: config.reminders || [] });
   chat.reminders = reminders;
   chat.onMessage = () => bond.add('chat', 2);
+  // looking at your screen (look.js): when you ask, or now and then if you turned it on
+  const look = new Look({ capri, panel, brain, chat, guide, host, fx, voice, active: () => performance.now() - lastMove });
+  look.configure(config);
 
   // Clicking her: what's going on, or she offers to talk. Sulking, she turns her back on you.
   capri.onClick = () => {
@@ -490,7 +494,7 @@ async function boot() {
   };
 
   // what's in here, for --dev scripts (debug route `eval`)
-  window.dev = { capri, brain, panel, chat, guide, fx, voice, bond, jealousy, reminders, screens: () => screens };
+  window.dev = { capri, brain, panel, chat, guide, fx, voice, bond, jealousy, reminders, look, screens: () => screens };
 
   host.onClaudeEvent((evt) => brain.handle(evt));
   host.onWindows((data) => {
@@ -583,6 +587,7 @@ async function boot() {
     voice.configure(cfg);
     jealousy.enabled = cfg.jealous !== false;
     followOn = cfg.follow !== false;
+    look.configure(cfg);
     reminders.sync(cfg.reminders); // one may have been cancelled from her menu
     capri.wander = cfg.wander;
     capri.possessWindows = cfg.possess;
@@ -634,6 +639,12 @@ async function boot() {
         break;
       case 'setupStep': // --dev: one step of her setup on its own (pickModel, pull, pickKeyed, address…)
         guide.scene(() => setup[cmd.step]?.(...(cmd.args || [])));
+        break;
+      case 'look': // "Look at my screen" in her menu: once, now
+        look.once();
+        break;
+      case 'watchScreen': // "Look at my screen now and then" in her menu
+        look.setAuto(cmd.on);
         break;
       case 'goScreen': // a screen picked in her menu: she goes there
         goToScreen(cmd.id);

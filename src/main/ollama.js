@@ -76,4 +76,17 @@ async function chat({ model, messages }, onDelta, signal) {
   return text;
 }
 
-module.exports = { base, models, warm, chat };
+// Whether a model can look at pictures (gemma3 can, llama3.2 can't). Can't tell: yes, try it.
+async function canSee(model) {
+  const res = await fetch(`${base()}/api/show`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model }),
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => null);
+  if (!res?.ok) return true;
+  const info = await res.json().catch(() => ({}));
+  return !Array.isArray(info.capabilities) || info.capabilities.includes('vision');
+}
+
+module.exports = { base, models, warm, chat, canSee };

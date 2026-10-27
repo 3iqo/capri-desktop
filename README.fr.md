@@ -185,7 +185,15 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
   es, même rangée) avec **C'est fait** et **Dans 10 min**. Si elle était éteinte à ce moment-là, elle t'en parle en
   revenant. Son menu › **Rappels** les liste, et chacun s'annule de là.
 
-Rien d'autre : elle ne voit ni ton écran ni tes fichiers.
+Rien d'autre : elle ne voit pas tes fichiers, ni ton écran sauf si tu le lui demandes.
+
+**Elle regarde ton écran**, si tu veux. Son menu › **Regarde mon écran** : elle pose ses yeux sur la fenêtre qui est
+devant, une ligne de scan la balaie, et elle te dit ce qu'elle en pense, à sa façon. **Regarder mon écran de temps en
+temps** la laisse le faire toute seule, toutes les 8 à 15 minutes, quand tu es là et que tu as changé de fenêtre
+(désactivé tant que tu ne le coches pas). La première fois, elle t'explique où va l'image : à l'IA de son chat. Avec une
+IA sur ton PC, rien ne sort de chez toi ; avec une IA en ligne, l'image part chez ce service. Elle ne garde jamais
+l'image, et son chat se souvient de ce qu'elle a dit un moment. Il faut un modèle qui sait lire les images : gemma3 sur
+ton PC, Gemini ou OpenAI en ligne (pas llama3.2, elle te le dit).
 
 ### La personnaliser
 
@@ -397,6 +405,10 @@ sur ton PC, comme vos rappels et où vous en êtes, elle et toi.
 Le titre de la fenêtre qui est devant toi est seulement comparé, sur ton PC, à une liste de noms d'IA (pour sa
 jalousie) : il n'est ni gardé ni envoyé nulle part.
 
+Quand elle regarde ton écran (seulement si tu le lui demandes, ou si tu as coché *Regarder mon écran de temps en
+temps*), une image de l'écran va à l'IA de son chat : sur ton PC avec Ollama, chez le service en ligne sinon. Elle
+n'est jamais écrite sur le disque.
+
 ## Direction artistique
 
 Le but : qu'on ait l'impression qu'elle sort de l'anime, pas d'un widget.
@@ -479,6 +491,7 @@ src/renderer/js/
   chat.js                lui parler : la conversation, qui elle est, ses réponses qui arrivent
   reminders.js           les rappels : les lire dans ton message, les garder, quand ils tombent
   bond.js                son lien avec toi, qui grandit, et sa jalousie des autres IA
+  look.js                elle regarde ton écran : la permission, le scan, ce que son IA en dit
   lines.js               ce qu'elle dit (FR / EN / ES / PT / RU)
   chip.js                son masque : quand elle dort, et en bas à gauche quand tu la ranges
   voice.js               les sons

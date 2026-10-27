@@ -257,6 +257,18 @@ export const LINES = {
     },
     // passée sur ton autre écran pour te suivre
     screens: { hello: ['Coucou, l’autre écran.', 'Tu bosses ici maintenant ? J’arrive.', 'Me voilà.'] },
+    // elle regarde ton écran (look.js) : ce qu'elle te dit avant, et quand ça ne marche pas
+    look: {
+      ask: 'Je peux jeter un œil à ton écran ?',
+      local: 'Une image de ton écran va à ton IA, sur ce PC ({model}), et je te dis ce que j’en pense. Rien ne sort de chez toi, et je ne garde pas l’image.',
+      online: 'Une image de ton écran part chez {service} ({model}) pour que je puisse la commenter. Je ne garde pas l’image, mais eux la reçoivent : évite quand tu as des trucs perso à l’écran.',
+      auto: 'De temps en temps, quand tu es là et que tu as changé de fenêtre. Tu pourras arrêter dans mon menu.',
+      yes: 'Oui, regarde', no: 'Non merci',
+      on: 'D’accord. Je regarderai de temps en temps.',
+      noVision: '{model} ne sait pas lire les images. gemma3 sait, sur ton PC, comme Gemini en ligne : change dans mon menu › Modèle IA.',
+      noAI: 'Il me faut une IA pour regarder : clic droit sur moi › Modèle IA.',
+      failed: 'Je n’ai pas réussi à regarder : {error}',
+    },
     // les rappels (reminders.js) : « rappelle-moi dans 20 min de sortir le linge »
     remind: {
       now: ['Hé. Tu m’as demandé de te rappeler : {text}.', 'C’est l’heure : {text}.', 'Rappel, choom : {text}.'],
@@ -556,6 +568,18 @@ export const LINES = {
     },
     // over on your other screen, following you
     screens: { hello: ['Hi, other screen.', 'Working over here now? Coming.', 'There you are.'] },
+    // she looks at your screen (look.js): what she tells you first, and when it doesn't work
+    look: {
+      ask: 'Can I take a look at your screen?',
+      local: 'A picture of your screen goes to your AI, on this PC ({model}), and I tell you what I make of it. Nothing leaves your machine, and I don’t keep the picture.',
+      online: 'A picture of your screen goes to {service} ({model}) so I can comment on it. I don’t keep it, but they get it: skip it when there’s personal stuff on your screen.',
+      auto: 'Now and then, when you’re here and you’ve switched windows. You can stop it in my menu.',
+      yes: 'Yes, look', no: 'No thanks',
+      on: 'Okay. I’ll take a look now and then.',
+      noVision: '{model} can’t read pictures. gemma3 can, on your PC, and so can Gemini online: switch in my menu › AI model.',
+      noAI: 'I need an AI to look: right-click me › AI model.',
+      failed: 'I couldn’t look: {error}',
+    },
     // reminders (reminders.js): "remind me in 20 minutes to take out the laundry"
     remind: {
       now: ['Hey. You asked me to remind you: {text}.', 'It’s time: {text}.', 'Reminder, choom: {text}.'],
@@ -851,6 +875,18 @@ export const LINES = {
     },
     // en tu otra pantalla, siguiéndote
     screens: { hello: ['Hola, otra pantalla.', '¿Ahora trabajas aquí? Voy.', 'Aquí estás.'] },
+    // mira tu pantalla (look.js): lo que te dice antes, y cuando no funciona
+    look: {
+      ask: '¿Puedo echarle un ojo a tu pantalla?',
+      local: 'Una imagen de tu pantalla va a tu IA, en este PC ({model}), y te digo qué me parece. Nada sale de tu equipo, y no me quedo con la imagen.',
+      online: 'Una imagen de tu pantalla va a {service} ({model}) para que pueda comentarla. Yo no me la quedo, pero ellos la reciben: evítalo cuando tengas cosas personales en pantalla.',
+      auto: 'De vez en cuando, cuando estés aquí y hayas cambiado de ventana. Puedes pararlo en mi menú.',
+      yes: 'Sí, mira', no: 'No, gracias',
+      on: 'Vale. Echaré un ojo de vez en cuando.',
+      noVision: '{model} no sabe leer imágenes. gemma3 sí, en tu PC, y Gemini en línea también: cámbialo en mi menú › Modelo de IA.',
+      noAI: 'Necesito una IA para mirar: clic derecho sobre mí › Modelo de IA.',
+      failed: 'No pude mirar: {error}',
+    },
     // recordatorios (reminders.js): «recuérdame en 20 minutos sacar la ropa»
     remind: {
       now: ['Oye. Me pediste que te recordara: {text}.', 'Es la hora: {text}.', 'Recordatorio, choom: {text}.'],
@@ -1148,6 +1184,18 @@ export const LINES = {
     },
     // na sua outra tela, te seguindo
     screens: { hello: ['Oi, outra tela.', 'Trabalhando aqui agora? Tô indo.', 'Aí está você.'] },
+    // ela olha sua tela (look.js): o que ela te diz antes, e quando não dá certo
+    look: {
+      ask: 'Posso dar uma olhada na sua tela?',
+      local: 'Uma imagem da sua tela vai pra sua IA, neste PC ({model}), e eu te digo o que acho. Nada sai da sua máquina, e eu não guardo a imagem.',
+      online: 'Uma imagem da sua tela vai pro {service} ({model}) pra eu poder comentar. Eu não guardo, mas eles recebem: evita quando tiver coisa pessoal na tela.',
+      auto: 'De vez em quando, quando você estiver aqui e tiver trocado de janela. Dá pra parar no meu menu.',
+      yes: 'Sim, olha', no: 'Não, valeu',
+      on: 'Beleza. Vou dar uma olhada de vez em quando.',
+      noVision: '{model} não sabe ler imagens. O gemma3 sabe, no seu PC, e o Gemini online também: troca no meu menu › Modelo de IA.',
+      noAI: 'Preciso de uma IA pra olhar: clique direito em mim › Modelo de IA.',
+      failed: 'Não consegui olhar: {error}',
+    },
     // lembretes (reminders.js): "me lembra daqui a 20 minutos de tirar a roupa"
     remind: {
       now: ['Ei. Você me pediu pra te lembrar: {text}.', 'Tá na hora: {text}.', 'Lembrete, choom: {text}.'],
@@ -1447,6 +1495,18 @@ export const LINES = {
     },
     // на твоём другом экране, следом за тобой
     screens: { hello: ['Привет, другой экран.', 'Теперь работаешь тут? Иду.', 'Вот ты где.'] },
+    // она смотрит на твой экран (look.js): что она говорит заранее и когда не выходит
+    look: {
+      ask: 'Можно взглянуть на твой экран?',
+      local: 'Картинка твоего экрана уходит твоему ИИ, на этом ПК ({model}), а я говорю, что думаю. Ничего не покидает твой компьютер, и картинку я не храню.',
+      online: 'Картинка твоего экрана уходит в {service} ({model}), чтобы я могла её прокомментировать. Я её не храню, но они её получают: не стоит, когда на экране что-то личное.',
+      auto: 'Иногда, когда ты на месте и сменилось окно. Выключить можно в моём меню.',
+      yes: 'Да, смотри', no: 'Нет, спасибо',
+      on: 'Ладно. Буду иногда поглядывать.',
+      noVision: '{model} не умеет читать картинки. gemma3 умеет, на твоём ПК, и Gemini онлайн тоже: поменяй в моём меню › ИИ-модель.',
+      noAI: 'Чтобы смотреть, мне нужен ИИ: правый клик по мне › ИИ-модель.',
+      failed: 'Не получилось посмотреть: {error}',
+    },
     // напоминания (reminders.js): «напомни через 20 минут снять бельё»
     remind: {
       now: ['Напоминаю: {text}.', 'Пора: {text}.', 'Напоминание, чумба: {text}.'],

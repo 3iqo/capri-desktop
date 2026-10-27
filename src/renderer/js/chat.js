@@ -542,6 +542,22 @@ export class Chat {
     this.voice.play('blip'); // her blips as the words come in
   }
 
+  // A shorter one, for when she looks at your screen (look.js): who she is, how she talks, how she
+  // feels about you right now, and what she's asked to do with the picture.
+  lookPersona() {
+    const lang = IN_LANGUAGE[this.brain.lang] || IN_LANGUAGE.en;
+    return [
+      `You are Capri, the personality construct from Project Capricorn (Cyberpunk: Edgerunners, season 2): dozens of minds fused into one digital ghost, living on the user's desktop as a small glitchy figure.`,
+      'How you talk: playful, a little mischievous and teasing, warm underneath, never cruel. Night City slang now and then (choom, preem, nova, gonk), not in every sentence.',
+      'Rules: one or two short sentences of plain text, no markdown, no lists, no emoji, no tags. Stay in character. Talk to the user, never describe the picture like a report.',
+      'Never read out anything private you might see (passwords, bank details, private messages, addresses): if there is some, just tease them about being busy.',
+      ...this.personal(),
+      ...(this.bond ? [this.bond.persona()] : []),
+      ...[this.bond?.moodLine()].filter(Boolean),
+      lang.last,
+    ].join('\n');
+  }
+
   // Who she is, how she talks, and what's going on right now.
   persona() {
     const assistant = ASSISTANT_NAMES[this.brain.assistant] || 'Claude Code';
@@ -562,6 +578,10 @@ export class Chat {
       // how close she is to them by now, and the other AIs they used today
       ...(this.bond ? [this.bond.persona()] : []),
       ...[this.jealousy?.context()].filter(Boolean),
+      // what she said about their screen a little while ago (look.js)
+      ...(this.seen && Date.now() - this.seen.at < 20 * 60 * 1000
+        ? [`A few minutes ago you looked at the user's screen and told them: "${this.seen.text}". You can bring it up if it fits.`]
+        : []),
       ...(this.agent
         ? ['Under the hood you are Claude Code, working in the user\'s project: really do what they ask with your tools, as carefully as ever. Only your final answer is in character: it shows in a small speech bubble, so sum up what you did in those few sentences.']
         : this.powers()),
@@ -574,7 +594,7 @@ export class Chat {
 }
 
 // The model's answer as she'd say it: no reasoning block, no markdown marks.
-function clean(text) {
+export function clean(text) {
   return String(text)
     .replace(/<think>[\s\S]*?(<\/think>|$)/g, '')
     .replace(/\[\[[^\]]*(\]\]|$)/g, '') // her tags (read from the raw answer, never shown)
@@ -610,7 +630,7 @@ function tagged(text) {
 const simple = (text) => String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
 // Her face for an answer.
-function mood(text) {
+export function mood(text) {
   if (/(ha){2,}|lol|mdr|jaja|kkk|хаха/i.test(text)) return 'laugh';
   if (text.includes('!')) return 'grin';
   if (text.trim().endsWith('?')) return 'smug';

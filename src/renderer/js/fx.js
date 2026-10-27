@@ -503,6 +503,14 @@ export class FxLayer {
     this.add({ type: 'crackle', life, at, radius, count });
   }
 
+  // She reads your screen (look.js): brackets slam onto the corners of what she's reading (rect(),
+  // a window, with covers() in front of it, or the whole screen), a red scanline sweeps down it in
+  // twelve drawings with a glow trailing above it, then the brackets blink twice and let go.
+  scan(rect, { covers = () => [] } = {}) {
+    if (!rect?.()) return;
+    this.add({ type: 'scan', life: FRAME_MS * 20, rect, covers });
+  }
+
   // Everything gone at once (her window is going to another screen: none of it belongs there).
   clear() {
     for (const it of this.items) it.done?.();
@@ -1546,6 +1554,53 @@ export class FxLayer {
         ctx.fillStyle = COLORS.paper;
         ctx.fillRect(x + w / 2 - 1, top + it.h * 0.1, 2, it.h * 0.8);
         ctx.restore();
+        break;
+      }
+      case 'scan': {
+        const r = it.rect();
+        if (!r) {
+          it.life = 0;
+          break;
+        }
+        const frame = Math.floor((now - it.born) / FRAME_MS);
+        this.onWindow(it, r, it.covers, () => {
+          const c = this.ctx;
+          c.save();
+          // the brackets: in on the first drawing, blinking at the end
+          if (frame < 14 || frame % 2) {
+            const L = Math.min(34, r.w / 5, r.h / 5);
+            const inset = frame === 0 ? -10 : 0;
+            for (const [cx, cy, sx, sy] of [[r.x, r.y, 1, 1], [r.x + r.w, r.y, -1, 1], [r.x, r.y + r.h, 1, -1], [r.x + r.w, r.y + r.h, -1, -1]]) {
+              const x = cx - sx * inset, y = cy - sy * inset;
+              const pts = [[x, y + sy * L], [x, y], [x + sx * L, y]];
+              this.stroke(pts, COLORS.violet, 5, -2, 2);
+              this.stroke(pts, COLORS.red, 3);
+            }
+          }
+          // the scanline and its glow, down the window
+          if (frame < 13) {
+            const y = r.y + (r.h * Math.min(12, frame)) / 12;
+            c.beginPath();
+            c.rect(r.x, r.y, r.w, r.h);
+            c.clip();
+            c.globalAlpha = 0.16;
+            c.fillStyle = COLORS.red;
+            c.fillRect(r.x, y - 70, r.w, 70);
+            c.globalAlpha = 1;
+            c.fillStyle = COLORS.violet;
+            c.fillRect(r.x, y + 2, r.w, 3);
+            c.fillStyle = COLORS.red;
+            c.fillRect(r.x, y - 1, r.w, 3);
+            c.fillStyle = COLORS.paper;
+            c.fillRect(r.x, y, r.w, 1);
+            // bits of what she reads, flicking off the line
+            for (let i = 0; i < 4; i++) {
+              c.fillStyle = COLORS[pick(['red', 'paper', 'green'])];
+              c.fillRect(r.x + rand(0, r.w), y - rand(4, 30), rand(4, 26), 2);
+            }
+          }
+          c.restore();
+        });
         break;
       }
       case 'jolt': {

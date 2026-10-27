@@ -6,14 +6,16 @@ const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const {
   app, BrowserWindow, Tray, Menu, ipcMain, screen, protocol, net, shell, globalShortcut, nativeImage,
-  clipboard, ClipboardItem, dialog, powerMonitor,
+  clipboard, ClipboardItem, dialog, powerMonitor, desktopCapturer,
 } = require('electron');
+const { randomUUID } = require('node:crypto');
 
 const config = require('./config');
 const { TRAY, LANGS } = require('./labels');
 const { createBridge } = require('./bridge');
 const { startWindowWatch } = require('./windows');
 const llm = require('./llm');
+const ollama = require('./ollama');
 const setup = require('./setup');
 const apps = require('./apps');
 const launch = require('./launch');
@@ -323,6 +325,7 @@ function rebuildTray() {
     { label: t.help, click: () => sendCommand('welcome') },
     ...(cfg.claude ? [{ label: t.report, click: () => sendCommand('report') }] : []),
     { label: t.talk, click: () => sendCommand('chat') },
+    { label: t.lookNow, click: () => sendCommand('look') },
     {
       label: t.reminders,
       submenu: reminders.length
@@ -401,6 +404,14 @@ function rebuildTray() {
     { label: t.wander, type: 'checkbox', checked: cfg.wander, click: (item) => updateConfig({ wander: item.checked }) },
     { label: t.possess, type: 'checkbox', checked: cfg.possess, click: (item) => updateConfig({ possess: item.checked }) },
     { label: t.jealous, type: 'checkbox', checked: cfg.jealous !== false, click: (item) => updateConfig({ jealous: item.checked }) },
+    {
+      // she asks first (what she'll send where), then turns it on herself
+      label: t.lookAuto, type: 'checkbox', checked: Boolean(cfg.watchScreen),
+      click: (item) => {
+        sendCommand('watchScreen', { on: item.checked });
+        rebuildTray(); // as it is until she's asked
+      },
+    },
     {
       label: t.rest,
       submenu: [['corner', t.restCorner], ['taskbar', t.restTaskbar]].map(([rest, label]) => ({
@@ -536,6 +547,51 @@ async function chatWithFallback(cfg, messages, send, signal, streamed) {
   }
 }
 
+// She looks at your screen (look.js): a picture of the screen she's on, kept here in memory a moment
+// for her AI to look at, never written anywhere. 1280 px wide at most: enough to read, light to send.
+const snaps = new Map(); // id -> the picture, base64 JPEG
+async function snapScreen() {
+  const d = targetDisplay();
+  const k = d.scaleFactor || 1;
+  const fit = Math.min(1, 1280 / (d.bounds.width * k));
+  const size = { width: Math.round(d.bounds.width * k * fit), height: Math.round(d.bounds.height * k * fit) };
+  const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: size });
+  const src = sources.find((s) => s.display_id === String(d.id)) || sources[0];
+  if (!src || src.thumbnail.isEmpty()) throw new Error('no picture of the screen');
+  return src.thumbnail.toJPEG(72).toString('base64');
+}
+
+// What her AI says about that picture, as her (`persona`), asked `prompt`. With a code when it can't:
+// 'noai' (nothing to ask), 'novision' (that model can't look at pictures).
+async function sayAboutSnap({ id, persona, prompt }) {
+  const image = snaps.get(id);
+  snaps.delete(id);
+  if (!image) return { ok: false, error: 'the picture is gone' };
+  const cfg = config.load();
+  if (!chatModels?.length) await refreshModels();
+  const model = pickModel(cfg);
+  if (!model) return { ok: false, code: 'noai' };
+  if (cfg.provider === 'claude') return { ok: false, code: 'novision', model: 'Claude Code' };
+  if (cfg.provider === 'ollama' && !(await ollama.canSee(model))) return { ok: false, code: 'novision', model };
+  const user = cfg.provider === 'ollama'
+    ? { role: 'user', content: prompt, images: [image] }
+    : { role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image}` } }] };
+  const messages = [{ role: 'system', content: persona }, user];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const text = await llm.chat(cfg.provider, llmConfig(cfg), { model, messages }, () => {}, AbortSignal.timeout(120000));
+      return { ok: true, text, model };
+    } catch (err) {
+      if (err.code === 'busy' && attempt === 0) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      const novision = /image|vision|multimodal|modalit|image_url|content.*(part|type)/i.test(err.message);
+      return { ok: false, error: err.message, code: novision ? 'novision' : err.code || null, model };
+    }
+  }
+}
+
 async function pickProvider(provider) {
   updateConfig({ provider });
   await refreshModels();
@@ -633,6 +689,23 @@ function registerIpc() {
     }
   });
   ipcMain.on('chat:stop', (_e, id) => chats.get(id)?.abort());
+  // she looks at your screen (look.js): the picture first, then what her AI says about it
+  ipcMain.handle('look:snap', async () => {
+    try {
+      const id = randomUUID();
+      snaps.set(id, await snapScreen());
+      setTimeout(() => snaps.delete(id), 120000);
+      return { ok: true, id };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
+  ipcMain.handle('look:say', (_e, request) => sayAboutSnap(request || {}));
+  // where her AI runs, for what she tells you before she looks: { local, provider, model }
+  ipcMain.handle('look:where', () => {
+    const cfg = config.load();
+    return { local: llm.isLocal(cfg.provider, cfg), provider: llm.PROVIDERS[cfg.provider]?.label || cfg.provider, model: pickModel(cfg) };
+  });
   ipcMain.handle('chat:memory', () => readMemory().history || []);
   ipcMain.on('chat:remember', (_e, history) => Array.isArray(history) && saveMemory({ history }));
   ipcMain.on('chat:ollama', () => shell.openExternal(OLLAMA_SITE));

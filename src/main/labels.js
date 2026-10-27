@@ -21,6 +21,7 @@ const TRAY = {
     sync: (percent, stage) => `Elle et toi : ${percent} % · ${stage}`, stages: ['Signal faible', 'Contact', 'Synchro', 'Lien', 'Fusion'],
     reminders: 'Rappels', noReminders: 'Aucun rappel (demande-lui dans son chat)', cancelReminder: 'Annuler ce rappel',
     follow: 'Me suivre d’un écran à l’autre', jealous: 'Jalouse des autres IA',
+    lookNow: 'Regarde mon écran', lookAuto: 'Regarder mon écran de temps en temps',
   },
   en: {
     name: 'English',
@@ -39,6 +40,7 @@ const TRAY = {
     sync: (percent, stage) => `You and her: ${percent}% · ${stage}`, stages: ['Faint signal', 'Contact', 'In sync', 'Linked', 'Fused'],
     reminders: 'Reminders', noReminders: 'No reminders (ask her in her chat)', cancelReminder: 'Cancel this reminder',
     follow: 'Follow me across screens', jealous: 'Jealous of other AIs',
+    lookNow: 'Look at my screen', lookAuto: 'Look at my screen now and then',
   },
   es: {
     name: 'Español',
@@ -57,6 +59,7 @@ const TRAY = {
     sync: (percent, stage) => `Ella y tú: ${percent} % · ${stage}`, stages: ['Señal débil', 'Contacto', 'Sincronía', 'Vínculo', 'Fusión'],
     reminders: 'Recordatorios', noReminders: 'Ningún recordatorio (pídeselo en su chat)', cancelReminder: 'Cancelar este recordatorio',
     follow: 'Seguirme de una pantalla a otra', jealous: 'Celosa de otras IA',
+    lookNow: 'Mira mi pantalla', lookAuto: 'Mirar mi pantalla de vez en cuando',
   },
   pt: {
     name: 'Português (Brasil)',
@@ -75,6 +78,7 @@ const TRAY = {
     sync: (percent, stage) => `Ela e você: ${percent} % · ${stage}`, stages: ['Sinal fraco', 'Contato', 'Sintonia', 'Vínculo', 'Fusão'],
     reminders: 'Lembretes', noReminders: 'Nenhum lembrete (peça no chat dela)', cancelReminder: 'Cancelar este lembrete',
     follow: 'Me seguir de uma tela pra outra', jealous: 'Com ciúmes de outras IAs',
+    lookNow: 'Olha minha tela', lookAuto: 'Olhar minha tela de vez em quando',
   },
   ru: {
     name: 'Русский',
@@ -93,6 +97,7 @@ const TRAY = {
     sync: (percent, stage) => `Вы с ней: ${percent} % · ${stage}`, stages: ['Слабый сигнал', 'Контакт', 'Синхрон', 'Связь', 'Слияние'],
     reminders: 'Напоминания', noReminders: 'Напоминаний нет (попроси в её чате)', cancelReminder: 'Отменить напоминание',
     follow: 'Следовать за мной с экрана на экран', jealous: 'Ревнует к другим ИИ',
+    lookNow: 'Посмотри на мой экран', lookAuto: 'Иногда смотреть на мой экран',
   },
 };
 
