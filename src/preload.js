@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('host', {
   setInteractive: (on) => ipcRenderer.send('overlay:interactive', Boolean(on)),
   rearm: () => ipcRenderer.send('overlay:rearm'),
   cursor: () => ipcRenderer.invoke('overlay:cursor'),
+  screens: () => ipcRenderer.invoke('screens:list'),
+  moveScreen: (id) => ipcRenderer.invoke('screens:move', id),
   getConfig: () => ipcRenderer.invoke('config:get'),
   setConfig: (patch) => ipcRenderer.invoke('config:set', patch),
   listSounds: () => ipcRenderer.invoke('sounds:list'),

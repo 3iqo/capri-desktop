@@ -1,6 +1,8 @@
 # Watches the top-level windows so Capri can sit on them.
 # Prints one JSON line whenever something changes: the foreground window and the visible
-# windows in z-order (front first), as physical-pixel frame bounds. No titles, no contents.
+# windows in z-order (front first), as physical-pixel frame bounds. No contents, and no titles:
+# the title of the window in front is only checked against a short list of AI names (ChatGPT,
+# Gemini...) for her jealousy, and all that goes out is which of them matched ("ai").
 #
 #   powershell -File windows.ps1 <capri hwnd> <capri pid>
 
@@ -11,6 +13,7 @@ Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 public static class CapriWindows {
   delegate bool EnumProc(IntPtr hwnd, IntPtr lParam);
@@ -25,6 +28,8 @@ public static class CapriWindows {
   [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
   [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr hwnd, int index);
   [DllImport("user32.dll")] static extern int GetClassName(IntPtr hwnd, StringBuilder name, int max);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int max);
+  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
   [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr value);
   [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out RECT value, int size);
   [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out int value, int size);
@@ -34,6 +39,45 @@ public static class CapriWindows {
   const int WS_EX_NOACTIVATE = 0x08000000;
   const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
   const int DWMWA_CLOAKED = 14;
+
+  // Other AIs: a key, what gives them away in the title of the window in front, and the name of
+  // their own app's program, if they have one.
+  static readonly string[][] AIS = {
+    new[] { "chatgpt", @"\bChatGPT\b", "chatgpt" },
+    new[] { "claude", @"\bClaude\b", "claude" },
+    new[] { "codex", @"\bCodex\b", "codex" },
+    new[] { "gemini", @"\bGemini\b", "" },
+    new[] { "copilot", @"\bCopilot\b", "copilot" },
+    new[] { "perplexity", @"\bPerplexity\b", "perplexity" },
+    new[] { "deepseek", @"\bDeepSeek\b", "" },
+    new[] { "grok", @"\bGrok\b", "" },
+    new[] { "lechat", @"\bLe Chat\b|\bMistral AI\b", "" },
+    new[] { "characterai", @"character\.ai", "" },
+    new[] { "metaai", @"\bMeta AI\b", "" },
+  };
+  static IntPtr procOf = IntPtr.Zero;
+  static string proc = "";
+
+  // Which of them the window in front is, as a JSON list of keys.
+  static string Ai(IntPtr fg) {
+    var title = new StringBuilder(512);
+    GetWindowText(fg, title, 512);
+    if (fg != procOf) {
+      procOf = fg;
+      proc = "";
+      uint pid;
+      GetWindowThreadProcessId(fg, out pid);
+      try { proc = System.Diagnostics.Process.GetProcessById((int)pid).ProcessName.ToLowerInvariant(); } catch {}
+    }
+    string t = title.ToString();
+    var keys = new StringBuilder();
+    foreach (var ai in AIS) {
+      if (!Regex.IsMatch(t, ai[1], RegexOptions.IgnoreCase) && (ai[2] == "" || proc != ai[2])) continue;
+      if (keys.Length > 0) keys.Append(',');
+      keys.Append('"').Append(ai[0]).Append('"');
+    }
+    return "[" + keys.ToString() + "]";
+  }
 
   public static void Init() {
     SetProcessDpiAwarenessContext(new IntPtr(-4)); // per-monitor v2: real pixels everywhere
@@ -46,7 +90,8 @@ public static class CapriWindows {
     GetClassName(fg, fgClass, 64);
     // the taskbar clicked: it comes up over her (Windows has no levels among windows on top)
     bool taskbar = fgClass.ToString() == "Shell_TrayWnd" || fgClass.ToString() == "Shell_SecondaryTrayWnd";
-    sb.Append("{\"fg\":").Append(fg.ToInt64()).Append(",\"taskbar\":").Append(taskbar ? "true" : "false").Append(",\"wins\":[");
+    sb.Append("{\"fg\":").Append(fg.ToInt64()).Append(",\"taskbar\":").Append(taskbar ? "true" : "false")
+      .Append(",\"ai\":").Append(Ai(fg)).Append(",\"wins\":[");
     int count = 0;
     EnumWindows((h, l) => {
       if (count >= 40) return false;

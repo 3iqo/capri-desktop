@@ -83,9 +83,42 @@ function serveProtocol() {
   });
 }
 
+// Your screens. In --dev with CAPRI_SCREENS=2 and only one screen, it's cut in two halves side by
+// side, to try her going from one to the other without a second monitor.
+function displays() {
+  const real = screen.getAllDisplays();
+  if (!DEV || process.env.CAPRI_SCREENS !== '2' || real.length > 1) return real;
+  const d = screen.getPrimaryDisplay();
+  const half = (r, i) => ({ x: r.x + Math.floor(r.width / 2) * i, y: r.y, width: Math.floor(r.width / 2), height: r.height });
+  return [0, 1].map((i) => ({ ...d, id: d.id * 10 + i + 1, bounds: half(d.bounds, i), workArea: half(d.workArea, i), size: { width: Math.floor(d.size.width / 2), height: d.size.height } }));
+}
+
+// The screen a point (DIP) is on, else the nearest one.
+function displayAt(p) {
+  const all = displays();
+  const inside = all.find(({ bounds: b }) => p.x >= b.x && p.y >= b.y && p.x < b.x + b.width && p.y < b.y + b.height);
+  if (inside) return inside;
+  const near = screen.getDisplayNearestPoint(p);
+  return all.find((d) => d.id === near.id) || all[0];
+}
+
 function targetDisplay() {
   const { displayId } = config.load();
-  return screen.getAllDisplays().find((d) => d.id === displayId) || screen.getPrimaryDisplay();
+  const all = displays();
+  return all.find((d) => d.id === displayId) || all.find((d) => d.id === screen.getPrimaryDisplay().id) || all[0];
+}
+
+// Her window over to another screen (she's on her way there, screens.js). Set twice: going to a
+// screen with another scale, Windows resizes the window once it lands there.
+function moveOverlay(id) {
+  if (!displays().some((d) => d.id === id)) return null;
+  config.save({ displayId: id });
+  fitOverlay();
+  const { area } = overlayArea();
+  overlay.setBounds(area);
+  windowWatch?.refresh();
+  rebuildTray();
+  return area;
 }
 
 // Her window: the work area, or the whole screen while she rests on the taskbar (her legs hang
@@ -248,7 +281,10 @@ function rendererConfig() {
 
 function updateConfig(patch) {
   config.save(patch);
-  if ('rest' in patch) fitOverlay(); // the taskbar in her window or not
+  if ('rest' in patch) {
+    fitOverlay(); // the taskbar in her window or not
+    windowWatch?.refresh();
+  }
   const cfg = rendererConfig();
   overlay?.webContents.send('capri:config', cfg);
   rebuildTray();
@@ -263,11 +299,23 @@ function rebuildTray() {
   const t = Object.fromEntries(Object.entries(TRAY[resolveLang(cfg.lang)]).map(([key, value]) =>
     [key, typeof value === 'string' && watched.id !== 'claude' ? value.replaceAll('Claude Code', watched.name) : value]));
 
-  const displays = screen.getAllDisplays();
+  const screens = displays();
   const current = targetDisplay().id;
+  // how close she is to you (bond.js): STAGES there, 1000 xp is 100 %
+  const xp = cfg.bond?.xp || 0;
+  const stage = [0, 100, 300, 550, 850].filter((at) => xp >= at).length - 1;
+  // the reminders she keeps (reminders.js), soonest first
+  const reminders = [...(cfg.reminders || [])].sort((a, b) => a.at - b.at);
+  const when = (at) => {
+    const d = new Date(at);
+    const sameDay = d.toDateString() === new Date().toDateString();
+    return new Intl.DateTimeFormat(resolveLang(cfg.lang), sameDay ? { hour: '2-digit', minute: '2-digit' } : { weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(d);
+  };
+  const cancelReminder = (id) => updateConfig({ reminders: (config.load().reminders || []).filter((r) => r.id !== id) });
 
   const menu = Menu.buildFromTemplate([
     { label: t.online(PORT), enabled: false },
+    { label: t.sync(Math.min(100, Math.floor(xp / 10)), t.stages[stage]), enabled: false },
     { type: 'separator' },
     { label: t.teleport, click: () => sendCommand('teleport') },
     { label: t.satellite, click: () => sendCommand('satellite') },
@@ -275,6 +323,15 @@ function rebuildTray() {
     { label: t.help, click: () => sendCommand('welcome') },
     ...(cfg.claude ? [{ label: t.report, click: () => sendCommand('report') }] : []),
     { label: t.talk, click: () => sendCommand('chat') },
+    {
+      label: t.reminders,
+      submenu: reminders.length
+        ? reminders.map((r) => ({
+          label: `${when(r.at)} · ${(r.text || '…').slice(0, 50)}`,
+          submenu: [{ label: t.cancelReminder, click: () => cancelReminder(r.id) }],
+        }))
+        : [{ label: t.noReminders, enabled: false }],
+    },
     { label: t.custom, click: () => sendCommand('customize') },
     { label: cfg.visible ? t.hide : t.show, accelerator: 'Ctrl+Alt+C', click: () => toggleVisible() },
     { type: 'separator' },
@@ -300,13 +357,17 @@ function rebuildTray() {
     },
     {
       label: t.screen,
-      enabled: displays.length > 1,
-      submenu: displays.map((d, i) => ({
-        label: `${i + 1} — ${d.size.width}×${d.size.height}`,
-        type: 'radio',
-        checked: d.id === current,
-        click: () => { config.save({ displayId: d.id }); fitOverlay(); rebuildTray(); },
-      })),
+      enabled: screens.length > 1,
+      submenu: [
+        ...screens.map((d, i) => ({
+          label: `${i + 1} — ${d.size.width}×${d.size.height}`,
+          type: 'radio',
+          checked: d.id === current,
+          click: () => d.id !== current && sendCommand('goScreen', { id: d.id }), // she goes over there herself
+        })),
+        { type: 'separator' },
+        { label: t.follow, type: 'checkbox', checked: cfg.follow !== false, click: (item) => updateConfig({ follow: item.checked }) },
+      ],
     },
     {
       label: t.chatModel,
@@ -339,6 +400,7 @@ function rebuildTray() {
     },
     { label: t.wander, type: 'checkbox', checked: cfg.wander, click: (item) => updateConfig({ wander: item.checked }) },
     { label: t.possess, type: 'checkbox', checked: cfg.possess, click: (item) => updateConfig({ possess: item.checked }) },
+    { label: t.jealous, type: 'checkbox', checked: cfg.jealous !== false, click: (item) => updateConfig({ jealous: item.checked }) },
     {
       label: t.rest,
       submenu: [['corner', t.restCorner], ['taskbar', t.restTaskbar]].map(([rest, label]) => ({
@@ -509,7 +571,25 @@ function registerIpc() {
   ipcMain.handle('overlay:cursor', () => {
     const p = screen.getCursorScreenPoint();
     const b = overlay.getBounds();
-    return { x: p.x - b.x, y: p.y - b.y, inside: p.x >= b.x && p.y >= b.y && p.x < b.x + b.width && p.y < b.y + b.height };
+    const inside = p.x >= b.x && p.y >= b.y && p.x < b.x + b.width && p.y < b.y + b.height;
+    return { x: p.x - b.x, y: p.y - b.y, inside, display: displayAt(p).id };
+  });
+  // your screens (their bounds), the one she's on, and where her window is
+  ipcMain.handle('screens:list', () => {
+    const o = overlay.getBounds();
+    return {
+      current: targetDisplay().id,
+      origin: { x: o.x, y: o.y },
+      list: displays().map(({ id, bounds: b }) => ({ id, x: b.x, y: b.y, w: b.width, h: b.height })),
+    };
+  });
+  ipcMain.handle('screens:move', async (_e, id) => {
+    const area = moveOverlay(id);
+    if (!area) return null;
+    await new Promise((r) => setTimeout(r, 60));
+    overlay.setBounds(area); // again, once Windows has settled it on its new screen
+    const o = overlay.getBounds();
+    return { origin: { x: o.x, y: o.y }, width: o.width, height: o.height, gap: overlayArea().gap };
   });
   ipcMain.handle('config:get', () => rendererConfig());
   ipcMain.handle('hooks:status', () => activeHooks().status());
@@ -716,6 +796,25 @@ async function debugHandler(route, body) {
     }
     return { ok: true };
   }
+  if (route === 'eval') {
+    // a look inside the overlay (app.js puts what's there on window.dev in --dev)
+    return { ok: true, value: await overlay.webContents.executeJavaScript(String(body.js || 'null')) };
+  }
+  if (route === 'drag') {
+    // a drag over the overlay with a stand-in pointer, the real one untouched: the button goes down
+    // at the first point, follows the others (each `ms` after the one before), and comes up at the last
+    const points = Array.isArray(body.points) ? body.points : [];
+    if (!points.length) throw new Error('drag needs points');
+    const at = (p) => ({ x: Math.round(p.x), y: Math.round(p.y) });
+    overlay.webContents.sendInputEvent({ type: 'mouseMove', ...at(points[0]) });
+    overlay.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...at(points[0]) });
+    for (const p of points.slice(1)) {
+      await new Promise((r) => setTimeout(r, p.ms ?? 16));
+      overlay.webContents.sendInputEvent({ type: 'mouseMove', modifiers: ['leftButtonDown'], ...at(p) });
+    }
+    if (body.up !== false) overlay.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...at(points.at(-1)) });
+    return { ok: true };
+  }
   if (route === 'type') {
     // typing into the overlay (her chat), and Enter if asked
     if (body.text) await overlay.webContents.insertText(body.text);
@@ -786,9 +885,16 @@ function main() {
     llm.restoreClaude(readMemory().claude);
     refreshModels(); // for her menu's model list
     setTimeout(() => launch.launchables().catch(() => {}), 20000); // what she can open, before you ask
-    screen.on('display-metrics-changed', fitOverlay);
-    screen.on('display-added', () => { fitOverlay(); rebuildTray(); });
-    screen.on('display-removed', () => { fitOverlay(); rebuildTray(); });
+    // a screen plugged in, unplugged, or rearranged: her window fitted again, and she learns of it
+    const screensChanged = () => {
+      fitOverlay();
+      windowWatch?.refresh();
+      rebuildTray();
+      sendCommand('screens');
+    };
+    screen.on('display-metrics-changed', screensChanged);
+    screen.on('display-added', screensChanged);
+    screen.on('display-removed', screensChanged);
     // after sleep or a locked screen, once Windows has settled
     powerMonitor.on('resume', () => setTimeout(rearmOverlay, 2000));
     powerMonitor.on('unlock-screen', () => setTimeout(rearmOverlay, 1000));

@@ -31,6 +31,10 @@ const DEFAULTS = {
   motion: 'auto',    // her animations: 'auto' (like Windows' animation effects), 'full' or 'reduced'
   motionAsked: false, // she asked once, Windows' animations being off, whether to move anyway
   render: 'auto',   // how her window is drawn: 'auto', 'gl' (OpenGL) or 'software' (no graphics card), for PCs that show it black
+  follow: true,      // with several screens, she follows the pointer to the one you're on
+  jealous: true,     // she gets jealous when she sees you on another AI (bond.js)
+  reminders: [],     // the reminders she keeps: [{ id, at, text, made }] (reminders.js)
+  bond: null,        // how close she is to you: { xp, first, last, days, streak, caps } (bond.js)
 };
 
 let cache = null;

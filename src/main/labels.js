@@ -18,6 +18,9 @@ const TRAY = {
     possess: 'Posséder mes fenêtres', lang: 'Langue', auto: 'Automatique (système)', startup: 'Lancer au démarrage',
     hooksOn: 'Hooks Claude Code : installés', hooksOff: 'Installer les hooks Claude Code',
     hooksRemove: 'Retirer les hooks Claude Code', forget: 'Oublier nos conversations', quit: 'Quitter',
+    sync: (percent, stage) => `Elle et toi : ${percent} % · ${stage}`, stages: ['Signal faible', 'Contact', 'Synchro', 'Lien', 'Fusion'],
+    reminders: 'Rappels', noReminders: 'Aucun rappel (demande-lui dans son chat)', cancelReminder: 'Annuler ce rappel',
+    follow: 'Me suivre d’un écran à l’autre', jealous: 'Jalouse des autres IA',
   },
   en: {
     name: 'English',
@@ -33,6 +36,9 @@ const TRAY = {
     possess: 'Possess my windows', lang: 'Language', auto: 'Automatic (system)', startup: 'Start with Windows',
     hooksOn: 'Claude Code hooks: installed', hooksOff: 'Install Claude Code hooks',
     hooksRemove: 'Remove Claude Code hooks', forget: 'Forget our conversations', quit: 'Quit',
+    sync: (percent, stage) => `You and her: ${percent}% · ${stage}`, stages: ['Faint signal', 'Contact', 'In sync', 'Linked', 'Fused'],
+    reminders: 'Reminders', noReminders: 'No reminders (ask her in her chat)', cancelReminder: 'Cancel this reminder',
+    follow: 'Follow me across screens', jealous: 'Jealous of other AIs',
   },
   es: {
     name: 'Español',
@@ -48,6 +54,9 @@ const TRAY = {
     possess: 'Poseer mis ventanas', lang: 'Idioma', auto: 'Automático (sistema)', startup: 'Iniciar con Windows',
     hooksOn: 'Hooks de Claude Code: instalados', hooksOff: 'Instalar los hooks de Claude Code',
     hooksRemove: 'Quitar los hooks de Claude Code', forget: 'Olvidar nuestras conversaciones', quit: 'Salir',
+    sync: (percent, stage) => `Ella y tú: ${percent} % · ${stage}`, stages: ['Señal débil', 'Contacto', 'Sincronía', 'Vínculo', 'Fusión'],
+    reminders: 'Recordatorios', noReminders: 'Ningún recordatorio (pídeselo en su chat)', cancelReminder: 'Cancelar este recordatorio',
+    follow: 'Seguirme de una pantalla a otra', jealous: 'Celosa de otras IA',
   },
   pt: {
     name: 'Português (Brasil)',
@@ -63,6 +72,9 @@ const TRAY = {
     possess: 'Possuir minhas janelas', lang: 'Idioma', auto: 'Automático (sistema)', startup: 'Iniciar com o Windows',
     hooksOn: 'Hooks do Claude Code: instalados', hooksOff: 'Instalar os hooks do Claude Code',
     hooksRemove: 'Remover os hooks do Claude Code', forget: 'Esquecer nossas conversas', quit: 'Sair',
+    sync: (percent, stage) => `Ela e você: ${percent} % · ${stage}`, stages: ['Sinal fraco', 'Contato', 'Sintonia', 'Vínculo', 'Fusão'],
+    reminders: 'Lembretes', noReminders: 'Nenhum lembrete (peça no chat dela)', cancelReminder: 'Cancelar este lembrete',
+    follow: 'Me seguir de uma tela pra outra', jealous: 'Com ciúmes de outras IAs',
   },
   ru: {
     name: 'Русский',
@@ -78,6 +90,9 @@ const TRAY = {
     possess: 'Вселяться в мои окна', lang: 'Язык', auto: 'Автоматически (системный)', startup: 'Запускать вместе с Windows',
     hooksOn: 'Хуки Claude Code: установлены', hooksOff: 'Установить хуки Claude Code',
     hooksRemove: 'Удалить хуки Claude Code', forget: 'Забыть наши разговоры', quit: 'Выйти',
+    sync: (percent, stage) => `Вы с ней: ${percent} % · ${stage}`, stages: ['Слабый сигнал', 'Контакт', 'Синхрон', 'Связь', 'Слияние'],
+    reminders: 'Напоминания', noReminders: 'Напоминаний нет (попроси в её чате)', cancelReminder: 'Отменить напоминание',
+    follow: 'Следовать за мной с экрана на экран', jealous: 'Ревнует к другим ИИ',
   },
 };
 

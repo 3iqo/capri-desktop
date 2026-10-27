@@ -68,6 +68,18 @@ glitche, commente chaque action, vient te chercher quand elle attend ta permissi
   En chemin, le rebord d'une fenêtre peut la rattraper.
 - **Pose-la sur une fenêtre** : attrape-la et lâche-la avec les hanches sur le bord du haut d'une fenêtre, elle s'y assoit.
   Lâchée ailleurs, elle tombe.
+- **Lance-la** : tenue, elle se balance au bout de ta souris, les jambes qui gigotent. Lâche-la en plein mouvement et
+  elle part avec ton élan : une longue traînée pendant deux images, puis elle tournoie, sa crinière et ses autres
+  esprits derrière elle. Contre un bord de l'écran, elle s'écrase (elle y reste collée un instant, aplatie, et le verre
+  se fissure là où elle a tapé) et rebondit. Sur une fenêtre, elle se rattrape au rebord, ou rebondit dessus et la fait
+  trembler. Si elle retombe droite, elle atterrit sur ses pieds et glisse un peu ; sinon elle glisse par terre et reste
+  K.O. un moment, des étoiles au-dessus de la tête, avant de se relever d'un bond et de se secouer. Tu peux la rattraper
+  au vol. Une fois, ça la secoue (ou ça l'amuse, si elle t'aime bien) ; trois fois de suite, elle s'énerve, électrocute
+  ta souris et ne se laisse plus attraper pendant un moment.
+- **Plusieurs écrans** : quand ta souris reste quelques secondes sur un autre écran, elle te suit. S'il est juste à
+  côté du sien, elle s'accroupit, saute à travers le bord et ressort par une déchirure de l'autre côté ; sinon elle s'y
+  téléporte. Lancée vers un écran voisin, elle passe dessus. Quand Claude a besoin de toi ou qu'un rappel tombe, elle
+  vient sur l'écran où tu es. Son menu › **Écran** pour en choisir un, ou décocher *Me suivre d'un écran à l'autre*.
 - **Elle possède tes fenêtres**, comme dans la série où elle se glisse dans les corps et les systèmes : de temps en temps,
   elle plonge dans la fenêtre où elle est assise. Un éclair rouge fait le tour du cadre, des tranches glitchent,
   et la fenêtre te regarde avec ses yeux et son sourire en zigzag, d'autres yeux s'ouvrent partout, toutes les pupilles
@@ -85,7 +97,7 @@ glitche, commente chaque action, vient te chercher quand elle attend ta permissi
 
 ![Elle s'endort jusqu'à son masque, se réveille, et rangée en bas à gauche](docs/sleep.png)
 
-Le suivi des fenêtres ne marche que sous Windows pour l'instant (un petit script PowerShell lit la position des fenêtres, pas leurs titres ni leur contenu).
+Le suivi des fenêtres ne marche que sous Windows pour l'instant (un petit script PowerShell lit la position des fenêtres, jamais leur contenu ; le titre de celle qui est devant sert seulement à repérer une autre IA, voir « Elle s'attache à toi »).
 Sur macOS et Linux, elle flotte, dépasse des bords, tombe et se balade quand même.
 
 ### Elle te fait visiter
@@ -167,6 +179,11 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
   demander d'enregistrer. Si elle s'est seulement cachée dans la zone de notification, elle te propose **Forcer la
   fermeture**, là encore seulement sur ton clic (le travail non enregistré est alors perdu). Elle ne ferme jamais les
   morceaux de Windows, Claude, Ollama ni elle-même.
+- **Des rappels** (« rappelle-moi dans 20 min de sortir le linge », « rappelle-moi demain à 9h d'appeler le garage ») :
+  l'heure et le texte sont lus directement dans ton message, même avec un tout petit modèle, et un bouton **Annuler**
+  apparaît sous sa réponse. Sans heure, elle te demande quand. À l'heure dite, elle vient te trouver (sur l'écran où tu
+  es, même rangée) avec **C'est fait** et **Dans 10 min**. Si elle était éteinte à ce moment-là, elle t'en parle en
+  revenant. Son menu › **Rappels** les liste, et chacun s'annule de là.
 
 Rien d'autre : elle ne voit ni ton écran ni tes fichiers.
 
@@ -185,18 +202,39 @@ peut être passé :
 Dans son chat, « appelle-moi Léa » et « souviens-toi que mon chat s'appelle Neko » marchent aussi. Tout ça reste dans
 ses réglages, sur ton PC.
 
+### Elle s'attache à toi
+
+Plus vous passez de temps ensemble, plus elle se synchronise avec toi : les jours où vous êtes là tous les deux, le
+temps passé à ton PC, vos discussions, le travail de Claude qu'elle surveille, les rappels tenus. Chaque chose compte un
+peu par jour, il faut quelques semaines pour aller au bout. Cinq étapes, **Signal faible**, **Contact**, **Synchro**,
+**Lien** et **Fusion** : à chaque nouvelle, ses autres esprits sortent te regarder et elle te le dit. Ça change ce
+qu'elle te dit quand tu cliques sur elle, comment son chat te parle, ce qu'elle dit après quelques jours sans toi. Une
+fois attachée, elle est contente quand tu reviens à ton PC et vient parfois d'elle-même près de ta souris. Où vous en
+êtes : en haut de son menu.
+
+**Et elle est jalouse.** Quand la fenêtre devant toi est une autre IA (ChatGPT, Gemini, Copilot, Perplexity, DeepSeek,
+Grok, Le Chat, Character.AI, Meta AI, Codex, ou Claude quand elle surveille Codex), elle le remarque et le dit, plus ou
+moins bien selon où vous en êtes. Si tu y restes, une fois attachée, elle va s'asseoir sur sa fenêtre, te fusille du
+regard et la possède, sourcils froncés, avec un mot à elle écrit dessus. Ensuite elle boude : clique sur elle et elle te
+tourne le dos (ça passe, et en parler dans son chat aide). Son chat sait aussi quelles autres IA tu as utilisées
+aujourd'hui. Pour les repérer, le titre de la fenêtre qui est devant est comparé à cette liste de noms, sur ton PC : il
+n'est ni gardé ni envoyé, seul le nom trouvé lui parvient. Décoche *Jalouse des autres IA* dans son menu pour arrêter.
+
+### À la souris
+
 Elle n'attrape la souris que sur son corps (au pixel près) : tout le reste de l'écran reste utilisable normalement.
 
 - **Clic** sur elle : elle te dit où en est Claude (s'il ne se passe rien : un bouton **Parle-moi**, pour discuter
   avec elle).
-- **Glisser** : tu la déplaces.
+- **Glisser** : tu la déplaces. Lâchée en plein mouvement, elle part (voir « Lance-la »).
 - **Clic** sur le panneau : il se ferme.
 - **Ctrl+Alt+C** : elle se range (dans son biochip, comme dans la série) et il ne reste d'elle que son masque, les yeux
   fermés, en bas à gauche de l'écran. Ses yeux ne s'ouvrent que quand Claude a besoin de toi. Clique sur le masque
   (ou refais Ctrl+Alt+C) pour la faire revenir.
 - **Son menu** : clic droit sur elle (il est aussi sur son icône près de l'horloge) : téléporter, regarder le satellite,
-  démo, comment ça marche, rapport de mission, lui parler, taille, son, écran, modèle IA, se balader,
-  posséder tes fenêtres, langue, lancement au démarrage, hooks.
+  démo, comment ça marche, rapport de mission, lui parler, rappels, taille, son, écran (et te suivre d'un écran à
+  l'autre), modèle IA, se balader, posséder tes fenêtres, jalouse des autres IA, langue, lancement au démarrage, hooks.
+  Tout en haut : où vous en êtes, elle et toi.
 
 Elle parle **français, anglais, espagnol, portugais du Brésil et russe**, et choisit toute seule la langue de ton
 système. Tu peux en choisir une autre dans son menu.
@@ -305,6 +343,10 @@ avec ces noms (`.mp3`, `.wav`, `.ogg` ou `.m4a`) :
 | `possess` | la fenêtre qu'elle possède rit |
 | `blip` | chaque syllabe quand elle parle |
 | `tick` | petit rappel discret |
+| `throw` | elle part quand tu la lances |
+| `crash` | elle s'écrase contre quelque chose |
+| `remind` | un rappel tombe |
+| `jealous` | elle siffle de jalousie |
 
 ## C'est sûr ?
 
@@ -346,7 +388,10 @@ Le contenu de tes fichiers n'est jamais transmis : pour une écriture, seule sa 
 
 Son chat va à Ollama sur ton PC (`127.0.0.1:11434`, ou `OLLAMA_HOST`) avec ce qu'elle sait du moment (le nom du
 projet, la dernière action de Claude, les compteurs du jour). Son journal de mission reste dans son propre stockage,
-sur ton PC.
+sur ton PC, comme vos rappels et où vous en êtes, elle et toi.
+
+Le titre de la fenêtre qui est devant toi est seulement comparé, sur ton PC, à une liste de noms d'IA (pour sa
+jalousie) : il n'est ni gardé ni envoyé nulle part.
 
 ## Direction artistique
 
@@ -421,13 +466,15 @@ src/main/                Electron : fenêtre transparente plein écran, clic à 
 src/renderer/js/
   sprite.js              shader WebGL : tête, crinière, position assise, smears, images rémanentes, couleurs, glitch
   acting.js              les feuilles d'exposition : chaque mouvement, dessin par dessin
-  capri.js               le personnage : postures, téléportation, assise, bords d'écran, chute, drag, sommeil
+  capri.js               le personnage : postures, téléportation, assise, bords d'écran, chute, lancée, autres écrans, sommeil
   fx.js                  éclats, colonnes de lumière, éclairs, glyphes, lignes de vitesse, ondes de choc, le satellite et la lumière rouge, les fenêtres possédées, les cut-ins, son intro
   panel.js               le panneau « transmission », ses expressions et le ticker
   guide.js               son guide : les tutos, aller jusqu'aux choses et les montrer du doigt
   brain.js               traduit les événements Claude en répliques et en actions
   mission.js             le journal de mission du jour, pour son rapport
   chat.js                lui parler : la conversation, qui elle est, ses réponses qui arrivent
+  reminders.js           les rappels : les lire dans ton message, les garder, quand ils tombent
+  bond.js                son lien avec toi, qui grandit, et sa jalousie des autres IA
   lines.js               ce qu'elle dit (FR / EN / ES / PT / RU)
   chip.js                son masque : quand elle dort, et en bas à gauche quand tu la ranges
   voice.js               les sons

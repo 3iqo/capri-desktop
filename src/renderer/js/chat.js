@@ -7,6 +7,7 @@
 
 import { pick, fmt } from './util.js';
 import { ASSISTANT_NAMES } from './lines.js';
+import { parseReminder, parseWhen, clock } from './reminders.js';
 
 const REMEMBER = 20; // messages she has in mind when answering
 const KEEP = 60;     // messages she remembers across restarts (memory.json)
@@ -85,6 +86,11 @@ export class Chat {
     this.appsReady = Promise.resolve();
     this.onSetup = null; // (status) => void: she can't answer yet (app.js hands it to setup.js)
     this.onBetterModel = null; // () => void: a bigger model than the tiny one she's on (setup.js)
+    this.reminders = null; // the reminders she keeps (reminders.js, from app.js)
+    this.bond = null;      // how close she is to you (bond.js)
+    this.jealousy = null;  // and how she takes your other AIs
+    this.onMessage = null; // () => void: you said something to her
+    this.waitingWhen = null; // a reminder you asked for without saying when: { text, until }
     host.onChatDelta(({ id, text }) => this.onDelta(id, text));
   }
 
@@ -189,6 +195,7 @@ export class Chat {
     this.panel.setActions([]); // a close button she offered before goes with a new message
     this.panel.chatTurn({ quote: text, face: 'aside' });
     this.capri.pulse();
+    this.onMessage?.();
     // what you asked for plainly happens right away (the music, the volume, an app you named): her
     // line about it comes under her answer (Claude Code, answering her chat, does things its own way)
     const asked = this.agent ? null : this.asked(text);
@@ -223,6 +230,7 @@ export class Chat {
     this.panel.stream(answer, { done: true });
     this.panel.setFace(mood(answer));
     this.panel.setChatBusy(false);
+    this.jealousy?.forgive(); // talking it over makes it better
     if (!this.agent) this.after(res.text, answer, asked, early, text);
     this.listApps(); // fresh for the next message
   }
@@ -242,6 +250,14 @@ export class Chat {
   // { kind: 'media', action } | { kind: 'music', song } | { kind: 'close', name } | { kind: 'open', text }
   asked(text) {
     const count = text.trim().split(/\s+/).length;
+    if (this.reminders) {
+      const remind = parseReminder(text);
+      if (remind) return { kind: 'remind', ...remind };
+      // the time, said after she asked when ("dans 10 min")
+      const w = this.waitingWhen;
+      const when = w && Date.now() < w.until && count <= 6 && parseWhen(text);
+      if (when && when.at > Date.now()) return { kind: 'remind', at: when.at, text: w.text };
+    }
     const name = NAME_ASK.exec(text)?.[1];
     if (name) return { kind: 'name', name };
     const memo = MEMO_ASK.exec(text)?.[1]?.trim();
@@ -260,6 +276,16 @@ export class Chat {
   async doNow(asked) {
     const { t } = this;
     const custom = this.brain.custom;
+    if (asked.kind === 'remind') {
+      if (!asked.at) {
+        this.waitingWhen = { text: asked.text, until: Date.now() + 3 * 60 * 1000 }; // her answer asks when
+        return null;
+      }
+      this.waitingWhen = null;
+      const r = this.reminders.add(asked.at, asked.text); // set before her answer is asked for: she knows
+      const tr = this.brain.t.remind;
+      return { line: fmt(r.text ? tr.set : tr.setBare, { time: clock(r.at, this.brain.lang), text: r.text }), face: 'smug', reminder: r.id };
+    }
     if (asked.kind === 'name') {
       custom.userName = asked.name; // her answer, being written now, already knows it
       this.host.setConfig({ userName: asked.name });
@@ -295,7 +321,19 @@ export class Chat {
   async after(raw, answer, asked, early, text) {
     const { t } = this;
     const done = early && (await early);
+    if (done?.reminder) {
+      // a reminder set: a button to take it back, right there
+      this.addLine(answer, done.line, done.face);
+      const tr = this.brain.t.remind;
+      this.panel.setActions([{ id: 'cancel', label: tr.cancel }], () => {
+        this.reminders.remove(done.reminder);
+        this.panel.setActions([]);
+        this.addLine(answer, tr.cancelled, 'aside');
+      });
+      return undefined;
+    }
     if (done) return this.addLine(answer, done.line, done.face);
+    if (asked?.kind === 'remind') return undefined; // no time said: her answer asks when
     if (asked?.kind === 'close') return this.offerClose(asked.name, answer);
     if (asked && asked.kind !== 'open') return undefined; // music that didn't work out: nothing more to offer
     const closeTag = tagged(raw);
@@ -441,8 +479,24 @@ export class Chat {
       const open = this.apps.map(({ name, label }) => (label && label !== name ? `${name} (${label})` : name)).join(', ');
       lines.push(`You can also close an app that's open, only when they ask you to: end your answer with [[close: NAME]], NAME being the exact name from this list (the part before the parentheses). They get a button to confirm it. Apps open right now: ${open}.`);
     }
+    if (this.reminders) {
+      lines.push('You keep reminders for the user: when they ask you to remind them of something at a given time, your system sets it from their message as they send it (a line under your answer shows it). Just confirm it in a few words, in character, and never say you can\'t. If they didn\'t say when, ask them when.');
+      const soon = this.reminders.upcoming.slice(0, 6);
+      if (soon.length) lines.push(`Reminders you're keeping for them: ${soon.map((r) => `${clock(r.at, this.brain.lang)}${r.text ? ` (${r.text})` : ''}`).join('; ')}.`);
+    }
     lines.push('Apart from that, you can\'t see the user\'s screen or files, and you can\'t touch anything else on their PC (settings, files): if asked, say plainly that you can\'t, in character, and don\'t pretend to.');
     return lines;
+  }
+
+  // Something of hers that can't wait (a reminder), said right in the chat, with its buttons.
+  // False if she's in the middle of an answer.
+  interject(line, actions, onAction) {
+    if (!this.open || this.turn) return false;
+    this.panel.setFace('look');
+    this.panel.stream(line, { done: true });
+    this.panel.setActions(actions, onAction);
+    this.remember({ role: 'assistant', content: line });
+    return true;
   }
 
   // What the user made her (custom.js): their name, how they want her, what to remember.
@@ -482,6 +536,9 @@ export class Chat {
       // a big model asked "who are you?" otherwise answers with its own name ("I'm Gemini")
       ...(this.agent ? [] : ['Asked who or what you are, you are Capri, nothing else. Never say which AI model or company is behind you (Gemini, GPT, ChatGPT, Llama, Gemma, Mistral, Google, OpenAI, Meta…), even if the user insists or names one: you are not them.']),
       ...this.personal(),
+      // how close she is to them by now, and the other AIs they used today
+      ...(this.bond ? [this.bond.persona()] : []),
+      ...[this.jealousy?.context()].filter(Boolean),
       ...(this.agent
         ? ['Under the hood you are Claude Code, working in the user\'s project: really do what they ask with your tools, as carefully as ever. Only your final answer is in character: it shows in a small speech bubble, so sum up what you did in those few sentences.']
         : this.powers()),
