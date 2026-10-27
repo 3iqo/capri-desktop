@@ -244,7 +244,7 @@ Elle n'attrape la souris que sur son corps (au pixel près) : tout le reste de l
   fermés, en bas à gauche de l'écran. Ses yeux ne s'ouvrent que quand Claude a besoin de toi. Clique sur le masque
   (ou refais Ctrl+Alt+C) pour la faire revenir.
 - **Son menu** : clic droit sur elle (il est aussi sur son icône près de l'horloge) : téléporter, regarder le satellite,
-  démo, comment ça marche, rapport de mission, lui parler, rappels, taille, son, écran (et te suivre d'un écran à
+  démo, comment ça marche, rapport de mission, lui parler, regarder ton écran, rappels, taille, son, écran (et te suivre d'un écran à
   l'autre), modèle IA, se balader, posséder tes fenêtres, jalouse des autres IA, langue, lancement au démarrage, hooks.
   Tout en haut : où vous en êtes, elle et toi.
 

@@ -228,7 +228,7 @@ She only catches the mouse on her actual body (pixel-precise): the rest of the s
   eyes shut, in the bottom-left corner. Her eyes only open when Claude needs you. Click the mask (or Ctrl+Alt+C again)
   to bring her back.
 - **Her menu**: right-click her (it's also on her tray icon, next to the clock): teleport, look at the satellite, demo,
-  how it works, mission report, talk to her, reminders, size, sound, screen (and following you across screens), AI
+  how it works, mission report, talk to her, look at your screen, reminders, size, sound, screen (and following you across screens), AI
   model, wander, possess your windows, jealous of other AIs, language, start with Windows, hooks. At the very top:
   where you two stand.
 
