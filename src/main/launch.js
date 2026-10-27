@@ -142,14 +142,19 @@ async function launch({ kind, id } = {}) {
 }
 
 // The media keys, as if pressed on the keyboard: whatever plays music (Spotify, a browser…) reacts.
-// Play and pause are the same key; the volume moves a few steps at a time.
-const MEDIA = { pause: [179, 1], play: [179, 1], next: [176, 1], previous: [177, 1], volup: [175, 5], voldown: [174, 5], mute: [173, 1] };
+// Play and pause are the same key; the volume moves a few steps at a time. Sent as keys (their virtual
+// key codes), not typed: typed, they come out as "³" or "°" on a German keyboard.
+const MEDIA = { pause: [0xb3, 1], play: [0xb3, 1], next: [0xb0, 1], previous: [0xb1, 1], volup: [0xaf, 5], voldown: [0xae, 5], mute: [0xad, 1] };
+const KEY_DOWN = 1; // KEYEVENTF_EXTENDEDKEY
+const KEY_UP = 3;   // ...and KEYEVENTF_KEYUP
 
 async function media(action) {
   if (!WIN || !MEDIA[action]) return false;
   const [key, times] = MEDIA[action];
-  return powershell(`$w = New-Object -ComObject WScript.Shell; 1..${times} | ForEach-Object { $w.SendKeys([string][char]${key}) }`)
-    .then(() => true, () => false);
+  return powershell(
+    'Add-Type -Namespace Capri -Name Keys -MemberDefinition \'[DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra);\'; '
+    + `1..${times} | ForEach-Object { [Capri.Keys]::keybd_event(${key}, 0, ${KEY_DOWN}, [UIntPtr]::Zero); [Capri.Keys]::keybd_event(${key}, 0, ${KEY_UP}, [UIntPtr]::Zero) }`,
+  ).then(() => true, () => false);
 }
 
 // A Spotify search for it: in the app if it's installed, else on the web.
