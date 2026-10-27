@@ -132,7 +132,7 @@ export class Look {
       this.fx.cutin(...this.capri.cutinAt(-toward), { kind: 'eyes', life: 520 });
       this.fx.scan(rect, { covers: () => (win ? this.capri.coversOf(win.id) : []) });
       this.voice.play('charge');
-      const res = await this.host.lookSay({ id: snap.id, persona: this.chat.lookPersona(), prompt: PROMPT });
+      const res = await this.host.lookSay({ id: snap.id, persona: this.chat.lookPersona(), prompt: `${PROMPT}\n${this.chat.languageNote()}` });
       if (!res.ok) {
         if (res.code === 'novision') {
           // her model can't see: said once, and she stops trying on her own

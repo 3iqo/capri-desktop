@@ -13,12 +13,14 @@ const REMEMBER = 20; // messages she has in mind when answering
 const KEEP = 60;     // messages she remembers across restarts (memory.json)
 // her language, where small models need it: how she says "we" (else it's in English), and the last line
 // of her prompt, in that language (they drift into the English of everything above it)
+// `now`: the same, said again right by your message (small models answer in the language of the
+// conversation so far, English after a switch, whatever the top of her prompt says)
 const IN_LANGUAGE = {
-  fr: { we: '"on" or "nous" in French', last: 'Écris tout en français, sauf si l’utilisateur t’écrit dans une autre langue : alors dans la sienne. Seuls les mots d’argot de Night City restent en anglais, jamais une phrase entière.' },
-  en: { we: '', last: 'Write everything in English, unless the user writes to you in another language: then in theirs.' },
-  es: { we: '"nosotros" in Spanish', last: 'Escribe todo en español, salvo si el usuario te escribe en otro idioma: entonces en el suyo. Solo las palabras de jerga de Night City se quedan en inglés, nunca una frase entera.' },
-  pt: { we: '"a gente" or "nós" in Portuguese', last: 'Escreva tudo em português do Brasil, a não ser que o usuário te escreva em outra língua: aí, na dele. Só as gírias de Night City ficam em inglês, nunca uma frase inteira.' },
-  ru: { we: '"мы" in Russian', last: 'Пиши всё по-русски, если только пользователь не пишет тебе на другом языке: тогда на его языке. По-английски остаются только словечки Найт-Сити, никогда не целые фразы.' },
+  fr: { we: '"on" or "nous" in French', last: 'Écris tout en français, sauf si l’utilisateur t’écrit dans une autre langue : alors dans la sienne. Seuls les mots d’argot de Night City restent en anglais, jamais une phrase entière.', now: 'Réponds en français, sauf si ce message est écrit dans une autre langue.' },
+  en: { we: '', last: 'Write everything in English, unless the user writes to you in another language: then in theirs.', now: 'Answer in English, unless this message is written in another language.' },
+  es: { we: '"nosotros" in Spanish', last: 'Escribe todo en español, salvo si el usuario te escribe en otro idioma: entonces en el suyo. Solo las palabras de jerga de Night City se quedan en inglés, nunca una frase entera.', now: 'Responde en español, salvo si este mensaje está escrito en otro idioma.' },
+  pt: { we: '"a gente" or "nós" in Portuguese', last: 'Escreva tudo em português do Brasil, a não ser que o usuário te escreva em outra língua: aí, na dele. Só as gírias de Night City ficam em inglês, nunca uma frase inteira.', now: 'Responda em português do Brasil, a não ser que esta mensagem esteja escrita em outra língua.' },
+  ru: { we: '"мы" in Russian', last: 'Пиши всё по-русски, если только пользователь не пишет тебе на другом языке: тогда на его языке. По-английски остаются только словечки Найт-Сити, никогда не целые фразы.', now: 'Отвечай по-русски, если только это сообщение не написано на другом языке.' },
 };
 const STAY_MS = 10 * 60 * 1000; // no wandering off mid-conversation
 const LOADING_AFTER_MS = 5000;
@@ -219,12 +221,13 @@ export class Chat {
       this.opening = null;
     }
     const messages = [{ role: 'system', content: this.persona() }, ...this.history.slice(-REMEMBER)];
-    // In a mood (angry, sulking…): said again right by your message, for this answer only. Small
-    // local models mostly go by the last thing they read: up in her prompt alone, they forget it.
-    const mood = !this.agent && this.bond?.moodLine();
-    if (mood) {
+    // Her mood (angry, sulking…) and her language, said again right by your message, for this answer
+    // only. Small local models mostly go by the last thing they read: up in her prompt alone, they
+    // forget it (and answer in English after a conversation in English).
+    if (!this.agent) {
+      const mood = this.bond?.moodLine().replace(/^Right now: /, '');
       const last = messages.at(-1);
-      messages[messages.length - 1] = { ...last, content: `${last.content}\n\n(Note for you, never repeat it: ${mood.replace(/^Right now: /, '')})` };
+      messages[messages.length - 1] = { ...last, content: `${last.content}\n\n(Note for you, never repeat it: ${[mood, this.languageNote()].filter(Boolean).join(' ')})` };
     }
     // nothing yet after a few seconds: Ollama is still loading the model (the first answer after a start),
     // or Claude Code is at work
@@ -540,6 +543,11 @@ export class Chat {
     this.answer += piece;
     this.panel.stream(clean(this.answer));
     this.voice.play('blip'); // her blips as the words come in
+  }
+
+  // Her language, in it, for right by the message (above).
+  languageNote() {
+    return (IN_LANGUAGE[this.brain.lang] || IN_LANGUAGE.en).now;
   }
 
   // A shorter one, for when she looks at your screen (look.js): who she is, how she talks, how she
