@@ -45,6 +45,20 @@ const MUSIC_WORD = /musi|chanson|song|track|titre|morceau|spotify|canci|faixa|п
 // "put X on Spotify", "mets X sur Spotify", "pon X en Spotify", "coloca X no Spotify", "включи X в Spotify"
 const SPOTIFY_ASK = /(?:play|put on|put|mets|joue|lance|écoute|pon|toca|reproduce|coloca|toque|включи|поставь)\s+(?:moi\s+|me\s+)?(.+?)\s+(?:on|sur|en|no|na|в)\s+spotify/i;
 const MEDIA_ACTIONS = new Set(MEDIA_ASK.map(([action]) => action));
+// "mets Bohemian Rhapsody sur YouTube", "play Daft Punk on youtube"
+const YOUTUBE_ASK = /(?:play|put on|put|mets|joue|lance|écoute|pon|toca|reproduce|coloca|bota|toque|включи|поставь)(?:[- ]moi|[- ]me|me)?\s+(.+?)\s+(?:on|sur|en|no|na|в)\s+youtube/i;
+// "mets Bohemian Rhapsody", "joue-moi du Daft Punk", "play some Queen": a song, or a game to play
+const PLAY_ASK = /^(?:capri,?\s+)?(?:mets|joue|play|put on|pon|toca|coloca|bota|toque|включи|поставь)(?:[- ]moi|[- ]me|me)?\s+(.{2,100})$/iu;
+// "joue à Brawlhalla", "play the game…": a game, not a song
+const GAME_ASK = /^(?:capri,?\s+)?(?:joue|play)\s+(?:à|au|aux|a|the game)\s/i;
+// "du Daft Punk", "some Queen": who to play, without the "some"
+const songOf = (s) => s.replace(/^(?:du|de la|de l['’]|des|some|un peu de|del|un poco de|algo de|um pouco de)\s+/i, '').trim();
+// "mets ce que tu veux", "play whatever you want": she picks (her tag)
+const HER_PICK = /tu veux|ton choix|surprends|you want|whatever|your choice|surprise me|quieras|tu elecci[óo]n|quiser|sua escolha|хочешь|на твой выбор/i;
+// what's left when it doesn't say which song ("mets de la musique", "play something")
+const VAGUE_SONG = /^(?:(?:de\s+la|du|des|la|le|les|une?|some|a|the|un|algo\s+de|alguma|um|uma|что-нибудь)\s+)?(?:musique|music|son|sons|chanson|morceau|truc|quelque\s+chose|something|song|tunes?|m[úu]sica|canci[óo]n|algo|coisa|музыку|песню)?\s*[.!?]*$/iu;
+// "regarde mon écran", "tu vois quoi ?", "what's on my screen?", "что ты видишь?"
+const LOOK_ASK = /regarde (?:mon|l['’]|ce que)|(?:jette|jeter) un (?:œil|oeil)|tu vois quoi|qu['’]est[- ]ce que tu vois|look at (?:my|the|this) screen|what(?:'s| is) on my screen|what do you see|take a look|mira (?:mi|la) pantalla|qu[ée] ves|olha (?:minha|a) tela|o que voc[êe] v[êe]|посмотри на (?:мой )?экран|что ты видишь/i;
 // what her tag needs to find in your message before it does anything: a small model tags answers about
 // anything ("[[music: synthwave]]" under a film tip), and music and the media keys act right away
 const LISTEN = /[ée]cout|listen|escuch|\bouv(ir|e)\b|слуша|playlist|album|\b(play|joue|mets|pon|toca|coloca)\b|включи|поставь/i;
@@ -208,6 +222,7 @@ export class Chat {
     // what you asked for plainly happens right away (the music, the volume, an app you named): her
     // line about it comes under her answer (Claude Code, answering her chat, does things its own way)
     const asked = this.agent ? null : this.asked(text);
+    if (asked?.kind === 'look') return this.sendLook(text, id);
     const early = asked && asked.kind !== 'close' ? this.doNow(asked) : null;
     this.bond?.heard(text); // "sorry": she lets it go
     await Promise.race([this.appsReady, new Promise((r) => setTimeout(r, 1500))]);
@@ -261,6 +276,52 @@ export class Chat {
     this.listApps(); // fresh for the next message
   }
 
+  // "Look at my screen" in her chat: she looks (asking you first, the first time) and answers here,
+  // the conversation so far in mind.
+  async sendLook(text, id) {
+    const tl = this.brain.t.look;
+    const say = (line, face = 'aside') => {
+      if (this.turn !== id) return;
+      this.turn = 0;
+      this.remember({ role: 'assistant', content: line });
+      this.panel.stream(line, { done: true });
+      this.panel.setFace(face);
+      this.panel.setChatBusy(false);
+    };
+    if (!this.look.asked) {
+      const where = await this.host.lookWhere().catch(() => ({}));
+      this.history.pop(); // your message comes back once you've said yes
+      say(`${tl.ask} ${fmt(where.local ? tl.local : tl.online, { model: where.model || '…', service: where.provider || '' })}`, 'look');
+      this.panel.setActions([{ id: 'yes', label: tl.yes, primary: true }, { id: 'no', label: tl.no }], async (choice) => {
+        this.panel.setActions([]);
+        if (choice !== 'yes') {
+          this.interject(tl.declined, [], null);
+          return;
+        }
+        await this.host.setConfig({ lookAsked: true });
+        this.look.asked = true;
+        this.send(text);
+      });
+      return;
+    }
+    const snap = await this.host.lookSnap();
+    if (!snap.ok) return say(fmt(tl.failed, { error: snap.error }));
+    this.look.effect();
+    const res = await this.host.lookSay({
+      id: snap.id,
+      persona: this.lookPersona(),
+      history: this.history.slice(-REMEMBER, -1),
+      prompt: `${text}\n\n(Note for you, never repeat it: the picture is the user's screen right now; a small figure with a big red mane on it is you. Answer about what you really see, in character. ${this.languageNote()})`,
+    });
+    if (!res.ok) {
+      const model = String(res.model || '…').replace(/:latest$/, '');
+      return say(res.code === 'novision' ? fmt(tl.noVision, { model }) : res.code === 'noai' ? tl.noAI : fmt(tl.failed, { error: res.error || '…' }));
+    }
+    const answer = clean(res.text).replace(/^["“«]\s*|\s*["”»]$/g, '') || '…';
+    this.seen = { text: answer, at: Date.now() };
+    return say(answer, mood(answer));
+  }
+
   // an answer of hers, kept with your message before it
   remember(message) {
     this.history.push(message);
@@ -288,12 +349,18 @@ export class Chat {
     if (name) return { kind: 'name', name };
     const memo = MEMO_ASK.exec(text)?.[1]?.trim();
     if (memo) return { kind: 'memo', text: memo };
+    if (this.look && LOOK_ASK.test(text)) return { kind: 'look' };
     const media = MEDIA_ASK.find(([, re]) => re.test(text))?.[0];
     if (media && (count <= 5 || MUSIC_WORD.test(text))) return { kind: 'media', action: media };
     const song = SPOTIFY_ASK.exec(text)?.[1];
     if (song) return { kind: 'music', song };
+    const video = YOUTUBE_ASK.exec(text)?.[1];
+    if (video) return { kind: 'youtube', song: songOf(video) };
     const app = this.askedToClose(text);
     if (app) return { kind: 'close', name: app };
+    if (GAME_ASK.test(text) && count <= 8) return { kind: 'open', text };
+    const play = PLAY_ASK.exec(text.trim())?.[1];
+    if (play && !VAGUE_SONG.test(play) && !HER_PICK.test(play)) return { kind: 'play', song: songOf(play.replace(/[\s.!?]+$/, '')) };
     if (OPEN_ASK.test(text) && count <= 8) return { kind: 'open', text };
     return null;
   }
@@ -330,6 +397,13 @@ export class Chat {
       this.zap();
       return (await this.host.music(asked.song)) ? { line: fmt(t.music, { song: asked.song }), face: 'laugh' } : null;
     }
+    if (asked.kind === 'youtube') return this.youtube(asked.song);
+    if (asked.kind === 'play') {
+      // "joue à Brawlhalla" is a game; anything else, a song
+      const game = await this.host.findLaunch(asked.song);
+      if (game && ['steam', 'epic', 'app'].includes(game.kind)) return this.open(game);
+      return this.youtube(asked.song);
+    }
     const item = await this.host.findLaunch(asked.text);
     const site = namedSite(asked.text);
     if (site && (!item || BROWSER.test(item.name))) {
@@ -337,9 +411,29 @@ export class Chat {
       return (await this.host.openSite(site.url)) ? { line: fmt(t.siteOpened, { site: site.name }), face: 'laugh' } : null;
     }
     if (!item) return null; // nothing by that name here: her tag may still say what you meant
+    return this.open(item);
+  }
+
+  // An app, a game, a file or a folder: opened, or behind a button when it would run something.
+  async open(item) {
+    if (item.risky) return { offer: item };
     this.zap();
     const res = await this.host.launch(item);
-    return { line: res.ok ? fmt(t.opened, { app: item.name }) : `${t.failed} ${res.error}`, face: res.ok ? 'laugh' : 'aside' };
+    const name = this.nameOf(item);
+    return { line: res.ok ? fmt(this.t.opened, { app: name }) : `${this.t.failed} ${res.error}`, face: res.ok ? 'laugh' : 'aside' };
+  }
+
+  // how she calls it: a folder like Downloads in her words, anything else by its name
+  nameOf(item) {
+    return item.kind === 'known' ? this.t.folders[item.id] || item.name : item.name;
+  }
+
+  // The song itself on YouTube (the right video, not a search), in your browser.
+  async youtube(song) {
+    this.zap();
+    const res = await this.host.youtube(song);
+    if (!res) return null;
+    return { line: res.title ? fmt(this.t.youtube, { title: res.title }) : fmt(this.t.youtubeSearch, { song }), face: 'laugh' };
   }
 
   // Once she has answered: her line about what she did, else the app you asked to close, else what
@@ -358,6 +452,7 @@ export class Chat {
       });
       return undefined;
     }
+    if (done?.offer) return this.launch(done.offer, answer); // it would run something: your click first
     if (done) return this.addLine(answer, done.line, done.face);
     if (asked?.kind === 'remind') return undefined; // no time said: her answer asks when
     if (asked?.kind === 'close') return this.offerClose(asked.name, answer);
@@ -370,7 +465,8 @@ export class Chat {
     const value = tag[2].trim();
     if (!value || !wanted(kind, text)) return undefined;
     if (kind === 'media') return MEDIA_ACTIONS.has(value.toLowerCase()) ? this.media(value.toLowerCase(), answer) : undefined;
-    if (kind === 'music') return this.music(value, answer);
+    // a song she picked: on YouTube, the right video (on Spotify if that's what you said)
+    if (kind === 'music') return /spotify/i.test(text) ? this.music(value, answer) : this.playOn(value, answer);
     if (kind === 'site') return this.offerSite(value, answer);
     const item = await this.host.findLaunch(value);
     if (item) return this.launch(item, answer);
@@ -381,7 +477,7 @@ export class Chat {
   // her answer, with a line of what she did under it
   addLine(answer, line, face = null) {
     if (!this.open || this.turn) return;
-    this.panel.stream(`${answer}\n${line}`, { done: true });
+    this.panel.stream(answer === '…' ? line : `${answer}\n${line}`, { done: true }); // nothing but a tag: just the line
     if (face) this.panel.setFace(face);
   }
 
@@ -397,7 +493,7 @@ export class Chat {
     if (!this.open || this.turn) return;
     if (!now) {
       this.panel.setActions(
-        [{ id: 'open', label: fmt(t.openIt, { app: item.name }), primary: true }, { id: 'no', label: t.no }],
+        [{ id: 'open', label: fmt(t.openIt, { app: this.nameOf(item) }), primary: true }, { id: 'no', label: t.no }],
         (id) => (id === 'open' ? this.launch(item, answer, { now: true }) : this.panel.setActions([])),
       );
       return;
@@ -405,7 +501,12 @@ export class Chat {
     this.panel.setActions([]);
     this.zap();
     const res = await this.host.launch(item);
-    this.addLine(answer, res.ok ? fmt(t.opened, { app: item.name }) : `${t.failed} ${res.error}`, res.ok ? 'laugh' : 'aside');
+    this.addLine(answer, res.ok ? fmt(t.opened, { app: this.nameOf(item) }) : `${t.failed} ${res.error}`, res.ok ? 'laugh' : 'aside');
+  }
+
+  async playOn(song, answer) {
+    const done = await this.youtube(song);
+    if (done) this.addLine(answer, done.line, done.face);
   }
 
   // The media keys: pause, next, louder…
@@ -499,7 +600,7 @@ export class Chat {
   // What she can do on the PC when you ask (Windows), and nothing else.
   powers() {
     const lines = [
-      'Only when the user asks you to open an app or a game installed on their PC, play something on Spotify, control the music playing, or open a website: say in a few words that you will, and end your answer with one tag: [[open: NAME]], [[music: WHAT TO PLAY]], [[media: ACTION]] (ACTION: pause, play, next, previous, volup, voldown or mute), or [[site: ADDRESS]]. Some of these get a button to confirm, so never say it is already done. Any other time, write no tag at all: there are no other tags.',
+      'Only when the user asks you to open an app, a game, a file or folder on their desktop, or a folder like Downloads, to play music, to control the music playing, or to open a website: say in a few words that you will, and end your answer with one tag: [[open: NAME]], [[music: ARTIST - SONG]] (it plays on YouTube; if they did not say which song, pick one that fits), [[media: ACTION]] (ACTION: pause, play, next, previous, volup, voldown or mute), or [[site: ADDRESS]]. Some of these get a button to confirm, so never say it is already done. Any other time, write no tag at all: there are no other tags.',
     ];
     if (this.apps.length) {
       const open = this.apps.map(({ name, label }) => (label && label !== name ? `${name} (${label})` : name)).join(', ');

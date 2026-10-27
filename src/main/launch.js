@@ -7,7 +7,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawn, execFile } = require('node:child_process');
-const { shell } = require('electron');
+const { app, shell } = require('electron');
 const { powershell } = require('./apps');
 
 const WIN = process.platform === 'win32';
@@ -126,13 +126,73 @@ function match(items, text) {
   return best?.item || null;
 }
 
+// What's on your desktop (yours and the shared one): files, folders and shortcuts, by name.
+function desktopItems() {
+  const dirs = [app.getPath('desktop'), path.join(process.env.PUBLIC || 'C:\\Users\\Public', 'Desktop')];
+  const items = [];
+  for (const dir of dirs) {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const e of entries) {
+      if (e.name.startsWith('.') || /^desktop\.ini$/i.test(e.name)) continue;
+      const folder = e.isDirectory();
+      items.push({ name: folder ? e.name : e.name.replace(/\.[^.]+$/, ''), kind: folder ? 'folder' : 'file', id: path.join(dir, e.name) });
+    }
+  }
+  return items;
+}
+
+// files that run something: never opened without a click, even named by you
+const RUNS = /\.(exe|bat|cmd|ps1|vbs|vbe|js|jse|wsf|wsh|msi|msp|reg|scr|com|jar|hta|cpl|pif)$/i;
+const risky = (item) => item?.kind === 'file' && RUNS.test(item.id);
+
+// Folders asked for by what they are ("ouvre mes téléchargements", "open the file explorer").
+const FOLDERS = [
+  ['explorer', /explorateur|file explorer|\bexplorer\b|ce pc|this pc|explorador|проводник/i],
+  ['recycle', /corbeille|recycle bin|\btrash\b|papelera|lixeira|корзин/i],
+  ['downloads', /t[ée]l[ée]chargements?|downloads?|descargas|transfer[êe]ncias|загрузк/i],
+  ['desktop', /\bbureau\b|\bdesktop\b|escritorio|[áa]rea de trabalho|рабоч\S* стол/i],
+  ['documents', /\bdocuments?\b|documentos|документ/i],
+  ['pictures', /\bimages\b|\bphotos\b|\bpictures\b|im[áa]genes|\bfotos\b|imagens|изображени|фото/i],
+  ['music', /dossier (de )?musique|music folder|carpeta de m[úu]sica|pasta de m[úu]sica|папк\S* (с )?музык/i],
+  ['videos', /\bvid[ée]os\b|v[íi]deos|видео/i],
+];
+
+function knownFolder(text) {
+  const hit = FOLDERS.find(([, re]) => re.test(text));
+  return hit ? { name: hit[0], kind: 'known', id: hit[0] } : null;
+}
+
+function openKnown(id) {
+  if (id === 'explorer') return spawn('explorer.exe', [], { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
+  if (id === 'recycle') return spawn('explorer.exe', ['shell:RecycleBinFolder'], { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
+  return shell.openPath(app.getPath(id));
+}
+
+// What you asked to open: an app or a game, something on your desktop, else a folder by what it is.
 async function find(text) {
-  return match(await launchables(), text);
+  return match([...desktopItems(), ...(await launchables())], text) || knownFolder(text);
 }
 
 // Opens one of them (only something she listed herself): a Start menu app through its AppsFolder
-// entry (desktop and Store apps alike), a game through its launcher's link.
+// entry (desktop and Store apps alike), a game through its launcher's link, a file or folder from
+// your desktop, a folder by what it is.
 async function launch({ kind, id } = {}) {
+  if (kind === 'known') {
+    if (!FOLDERS.some(([key]) => key === id)) throw new Error('not found');
+    await openKnown(id);
+    return undefined;
+  }
+  if (kind === 'file' || kind === 'folder') {
+    if (!desktopItems().some((i) => i.id === id)) throw new Error('not found');
+    const err = await shell.openPath(id);
+    if (err) throw new Error(err);
+    return undefined;
+  }
   const item = (await launchables()).find((i) => i.kind === kind && i.id === id);
   if (!item) throw new Error('not found');
   if (kind === 'steam') return shell.openExternal(`steam://rungameid/${id}`);
@@ -169,6 +229,31 @@ async function music(query) {
   return true;
 }
 
+// A song on YouTube, the exact video: the first result of a search (no key needed), opened in your
+// browser. { title } of what it found, or { title: null } when it could only open the search.
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+const VIDEO = /"videoRenderer":\{"videoId":"([\w-]{11})"[\s\S]*?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/;
+
+async function youtube(query) {
+  const q = String(query || '').trim().slice(0, 200);
+  if (!q) return null;
+  const search = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+  let video = null;
+  try {
+    const res = await fetch(search, {
+      // the consent cookie skips Europe's cookie page, which would hide the results
+      headers: { 'user-agent': UA, 'accept-language': 'en', cookie: 'CONSENT=YES+1; SOCS=CAI' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const m = VIDEO.exec(await res.text());
+    if (m) video = { id: m[1], title: JSON.parse(`"${m[2]}"`) };
+  } catch {
+    // offline or YouTube changed its page: the search still opens
+  }
+  await shell.openExternal(video ? `https://www.youtube.com/watch?v=${video.id}` : search);
+  return { title: video?.title || null };
+}
+
 // A website: http or https, with a real host name.
 function siteUrl(address) {
   try {
@@ -186,4 +271,4 @@ async function site(address) {
   return true;
 }
 
-module.exports = { launchables, match, find, launch, media, music, site, siteUrl };
+module.exports = { launchables, match, find, launch, media, music, youtube, site, siteUrl, risky };

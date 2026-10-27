@@ -93,6 +93,8 @@ export const LINES = {
       // ouvrir une appli ou un jeu, la musique, un site
       openIt: 'Ouvrir {app}', opened: '{app} : c’est parti.', notInstalled: 'Je ne trouve pas « {app} » sur ton PC.',
       music: 'Je cherche « {song} » sur Spotify.', siteIt: 'Ouvrir {site}', siteOpened: '{site} : ouvert.',
+      youtube: 'C’est parti : {title}.', youtubeSearch: 'Je te cherche « {song} » sur YouTube.',
+      folders: { explorer: 'L’explorateur', recycle: 'La corbeille', downloads: 'Tes téléchargements', desktop: 'Ton bureau', documents: 'Tes documents', pictures: 'Tes images', music: 'Ta musique', videos: 'Tes vidéos' },
       media: { pause: 'Pause.', play: 'Ça repart.', next: 'Suivante.', previous: 'Précédente.', volup: 'Plus fort.', voldown: 'Moins fort.', mute: 'J’ai appuyé sur muet.' },
     },
     // sa carte de rapport : ce que Claude a abattu aujourd'hui (son menu, ou d'elle-même le soir)
@@ -293,6 +295,7 @@ export const LINES = {
       online: 'Une image de ton écran part chez {service} ({model}) pour que je puisse la commenter. Je ne garde pas l’image, mais eux la reçoivent : évite quand tu as des trucs perso à l’écran.',
       auto: 'De temps en temps, quand tu es là et que tu as changé de fenêtre. Tu pourras arrêter dans mon menu.',
       yes: 'Oui, regarde', no: 'Non merci',
+      declined: 'D’accord, je ne regarde pas.',
       on: 'D’accord. Je regarderai de temps en temps.',
       noVision: '{model} ne sait pas lire les images. gemma3 sait, sur ton PC, comme Gemini en ligne : change dans mon menu › Modèle IA.',
       noAI: 'Il me faut une IA pour regarder : clic droit sur moi › Modèle IA.',
@@ -433,6 +436,8 @@ export const LINES = {
       // opening an app or a game, the music, a website
       openIt: 'Open {app}', opened: '{app}: on it.', notInstalled: 'I can’t find “{app}” on your PC.',
       music: 'Looking up “{song}” on Spotify.', siteIt: 'Open {site}', siteOpened: '{site}: open.',
+      youtube: 'Here you go: {title}.', youtubeSearch: 'Looking up “{song}” on YouTube.',
+      folders: { explorer: 'File Explorer', recycle: 'The recycle bin', downloads: 'Your downloads', desktop: 'Your desktop', documents: 'Your documents', pictures: 'Your pictures', music: 'Your music', videos: 'Your videos' },
       media: { pause: 'Paused.', play: 'Playing.', next: 'Next one.', previous: 'Previous one.', volup: 'Louder.', voldown: 'Quieter.', mute: 'Hit mute.' },
     },
     // her report card: what Claude got through today (her menu, or on her own in the evening)
@@ -633,6 +638,7 @@ export const LINES = {
       online: 'A picture of your screen goes to {service} ({model}) so I can comment on it. I don’t keep it, but they get it: skip it when there’s personal stuff on your screen.',
       auto: 'Now and then, when you’re here and you’ve switched windows. You can stop it in my menu.',
       yes: 'Yes, look', no: 'No thanks',
+      declined: 'Okay, I won’t look.',
       on: 'Okay. I’ll take a look now and then.',
       noVision: '{model} can’t read pictures. gemma3 can, on your PC, and so can Gemini online: switch in my menu › AI model.',
       noAI: 'I need an AI to look: right-click me › AI model.',
@@ -772,6 +778,8 @@ export const LINES = {
       // abrir una app o un juego, la música, una web
       openIt: 'Abrir {app}', opened: '{app}: en marcha.', notInstalled: 'No encuentro «{app}» en tu PC.',
       music: 'Busco «{song}» en Spotify.', siteIt: 'Abrir {site}', siteOpened: '{site}: abierta.',
+      youtube: 'Ahí va: {title}.', youtubeSearch: 'Te busco «{song}» en YouTube.',
+      folders: { explorer: 'El explorador', recycle: 'La papelera', downloads: 'Tus descargas', desktop: 'Tu escritorio', documents: 'Tus documentos', pictures: 'Tus imágenes', music: 'Tu música', videos: 'Tus vídeos' },
       media: { pause: 'Pausa.', play: 'Sigue sonando.', next: 'Siguiente.', previous: 'Anterior.', volup: 'Más alto.', voldown: 'Más bajo.', mute: 'Le di a silenciar.' },
     },
     // su informe: lo que Claude sacó hoy (su menú, o ella sola por la tarde)
@@ -969,6 +977,7 @@ export const LINES = {
       online: 'Una imagen de tu pantalla va a {service} ({model}) para que pueda comentarla. Yo no me la quedo, pero ellos la reciben: evítalo cuando tengas cosas personales en pantalla.',
       auto: 'De vez en cuando, cuando estés aquí y hayas cambiado de ventana. Puedes pararlo en mi menú.',
       yes: 'Sí, mira', no: 'No, gracias',
+      declined: 'Vale, no miro.',
       on: 'Vale. Echaré un ojo de vez en cuando.',
       noVision: '{model} no sabe leer imágenes. gemma3 sí, en tu PC, y Gemini en línea también: cámbialo en mi menú › Modelo de IA.',
       noAI: 'Necesito una IA para mirar: clic derecho sobre mí › Modelo de IA.',
@@ -1110,6 +1119,8 @@ export const LINES = {
       // abrir um app ou um jogo, a música, um site
       openIt: 'Abrir {app}', opened: '{app}: abrindo.', notInstalled: 'Não acho “{app}” no seu PC.',
       music: 'Procurando “{song}” no Spotify.', siteIt: 'Abrir {site}', siteOpened: '{site}: aberto.',
+      youtube: 'Lá vai: {title}.', youtubeSearch: 'Vou procurar “{song}” no YouTube.',
+      folders: { explorer: 'O explorador de arquivos', recycle: 'A lixeira', downloads: 'Seus downloads', desktop: 'Sua área de trabalho', documents: 'Seus documentos', pictures: 'Suas imagens', music: 'Suas músicas', videos: 'Seus vídeos' },
       media: { pause: 'Pausado.', play: 'Tocando.', next: 'Próxima.', previous: 'Anterior.', volup: 'Mais alto.', voldown: 'Mais baixo.', mute: 'Apertei o mudo.' },
     },
     // o relatório dela: o que o Claude fez hoje (o menu dela, ou sozinha à noite)
@@ -1307,6 +1318,7 @@ export const LINES = {
       online: 'Uma imagem da sua tela vai pro {service} ({model}) pra eu poder comentar. Eu não guardo, mas eles recebem: evita quando tiver coisa pessoal na tela.',
       auto: 'De vez em quando, quando você estiver aqui e tiver trocado de janela. Dá pra parar no meu menu.',
       yes: 'Sim, olha', no: 'Não, valeu',
+      declined: 'Beleza, não vou olhar.',
       on: 'Beleza. Vou dar uma olhada de vez em quando.',
       noVision: '{model} não sabe ler imagens. O gemma3 sabe, no seu PC, e o Gemini online também: troca no meu menu › Modelo de IA.',
       noAI: 'Preciso de uma IA pra olhar: clique direito em mim › Modelo de IA.',
@@ -1448,6 +1460,8 @@ export const LINES = {
       // открыть приложение или игру, музыка, сайт
       openIt: 'Открыть {app}', opened: '{app}: запускаю.', notInstalled: 'Не нахожу «{app}» на твоём ПК.',
       music: 'Ищу «{song}» в Spotify.', siteIt: 'Открыть {site}', siteOpened: '{site}: открыт.',
+      youtube: 'Держи: {title}.', youtubeSearch: 'Ищу «{song}» на YouTube.',
+      folders: { explorer: 'Проводник', recycle: 'Корзина', downloads: 'Твои загрузки', desktop: 'Твой рабочий стол', documents: 'Твои документы', pictures: 'Твои изображения', music: 'Твоя музыка', videos: 'Твои видео' },
       media: { pause: 'Пауза.', play: 'Играет.', next: 'Следующий.', previous: 'Предыдущий.', volup: 'Громче.', voldown: 'Тише.', mute: 'Нажала «без звука».' },
     },
     // её отчёт: что Claude сделал за день (её меню, или сама вечером)
@@ -1647,6 +1661,7 @@ export const LINES = {
       online: 'Картинка твоего экрана уходит в {service} ({model}), чтобы я могла её прокомментировать. Я её не храню, но они её получают: не стоит, когда на экране что-то личное.',
       auto: 'Иногда, когда ты на месте и сменилось окно. Выключить можно в моём меню.',
       yes: 'Да, смотри', no: 'Нет, спасибо',
+      declined: 'Ладно, не смотрю.',
       on: 'Ладно. Буду иногда поглядывать.',
       noVision: '{model} не умеет читать картинки. gemma3 умеет, на твоём ПК, и Gemini онлайн тоже: поменяй в моём меню › ИИ-модель.',
       noAI: 'Чтобы смотреть, мне нужен ИИ: правый клик по мне › ИИ-модель.',

@@ -60,6 +60,7 @@ contextBridge.exposeInMainWorld('host', {
   launch: (item) => ipcRenderer.invoke('apps:launch', item),
   media: (action) => ipcRenderer.invoke('apps:media', action),
   music: (query) => ipcRenderer.invoke('apps:music', query),
+  youtube: (query) => ipcRenderer.invoke('apps:youtube', query),
   openSite: (address) => ipcRenderer.invoke('apps:site', address),
   focusOverlay: (on) => ipcRenderer.send('overlay:focus', Boolean(on)),
 });

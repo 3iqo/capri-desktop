@@ -564,7 +564,7 @@ async function snapScreen() {
 
 // What her AI says about that picture, as her (`persona`), asked `prompt`. With a code when it can't:
 // 'noai' (nothing to ask), 'novision' (that model can't look at pictures).
-async function sayAboutSnap({ id, persona, prompt }) {
+async function sayAboutSnap({ id, persona, prompt, history = [] }) {
   const image = snaps.get(id);
   snaps.delete(id);
   if (!image) return { ok: false, error: 'the picture is gone' };
@@ -577,7 +577,9 @@ async function sayAboutSnap({ id, persona, prompt }) {
   const user = cfg.provider === 'ollama'
     ? { role: 'user', content: prompt, images: [image] }
     : { role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image}` } }] };
-  const messages = [{ role: 'system', content: persona }, user];
+  // asked in her chat: the conversation so far comes before it (text only)
+  const before = (Array.isArray(history) ? history : []).filter((m) => typeof m?.content === 'string' && ['user', 'assistant'].includes(m.role));
+  const messages = [{ role: 'system', content: persona }, ...before, user];
   for (let attempt = 0; ; attempt++) {
     try {
       const text = await llm.chat(cfg.provider, llmConfig(cfg), { model, messages }, () => {}, AbortSignal.timeout(120000));
@@ -777,7 +779,11 @@ function registerIpc() {
   ipcMain.handle('apps:find', async (_e, wanted) => appInfo(await apps.find(wanted).catch(() => null)));
   ipcMain.handle('apps:close', (_e, { name, force }) => apps.close(name, { force }).catch((err) => ({ error: err.message })));
   // opening things you ask her to (launch.js): an app or a game, your music, a website
-  ipcMain.handle('apps:findLaunch', (_e, text) => launch.find(String(text || '')).catch(() => null));
+  ipcMain.handle('apps:findLaunch', async (_e, text) => {
+    const item = await launch.find(String(text || '')).catch(() => null);
+    return item && { ...item, risky: launch.risky(item) }; // a program or a script: behind a button
+  });
+  ipcMain.handle('apps:youtube', (_e, query) => launch.youtube(query).catch(() => null));
   ipcMain.handle('apps:launch', (_e, item) => launch.launch(item).then(() => ({ ok: true }), (err) => ({ ok: false, error: err.message })));
   ipcMain.handle('apps:media', (_e, action) => launch.media(action));
   ipcMain.handle('apps:music', (_e, query) => launch.music(query).catch(() => false));

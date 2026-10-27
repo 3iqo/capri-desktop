@@ -177,9 +177,13 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
 - **Ouvrir une appli ou un jeu** : tout ce qui est dans ton menu Démarrer (les applis du Store comme Spotify
   comprises), tes jeux Steam et Epic (« ouvre Spotify », « lance Brawlhalla »). Si tu l'as nommé toi-même, ça s'ouvre
   tout de suite ; si c'est son IA qui l'a proposé, tu as d'abord un bouton.
+- **Tes dossiers et ton bureau** : « ouvre mes téléchargements », « ouvre l'explorateur de fichiers », « ouvre la
+  corbeille », ou un fichier, un dossier ou un raccourci posé sur ton bureau, par son nom. Ce qui lancerait un programme
+  ou un script (.exe, .bat, .ps1…) passe toujours par un bouton.
 - **La musique** : « pause », « suivante », « plus fort », « coupe le son »… appuient sur les touches multimédia, donc
-  ça marche avec Spotify et la plupart des lecteurs, dès que tu envoies. « Mets Daft Punk sur Spotify » ouvre Spotify
-  sur une recherche (l'appli si tu l'as, sinon le site).
+  ça marche avec Spotify et la plupart des lecteurs, dès que tu envoies. « Mets Bohemian Rhapsody » ou « mets-moi du
+  Daft Punk sur YouTube » ouvre le bon clip sur YouTube, directement (pas une recherche). « Mets la musique que tu
+  veux » : c'est elle qui choisit. « Mets Daft Punk sur Spotify » ouvre Spotify sur une recherche.
 - **Un site** : toujours derrière un bouton qui montre où il mène.
 - **Fermer une appli** (« ferme AM Music », « tu peux couper Discord ? ») : un bouton au nom de l'appli, et rien ne se
   passe tant que tu ne cliques pas. Elle la ferme comme son propre bouton de fermeture, donc l'appli peut encore te
@@ -192,7 +196,8 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
   es, même rangée) avec **C'est fait** et **Dans 10 min**. Si elle était éteinte à ce moment-là, elle t'en parle en
   revenant. Son menu › **Rappels** les liste, et chacun s'annule de là.
 
-Rien d'autre : elle ne voit pas tes fichiers, ni ton écran sauf si tu le lui demandes.
+Rien d'autre : elle ne lit pas tes fichiers, et ne voit ton écran que si tu le lui demandes (« regarde mon écran »,
+« tu vois quoi ? » dans son chat : elle regarde et te répond là, en gardant votre conversation en tête).
 
 **Elle regarde ton écran**, si tu veux. Son menu › **Regarde mon écran** : elle pose ses yeux sur la fenêtre qui est
 devant, une ligne de scan la balaie, et elle te dit ce qu'elle en pense, à sa façon. **Regarder mon écran de temps en

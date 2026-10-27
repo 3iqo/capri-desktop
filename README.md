@@ -168,8 +168,13 @@ panel says so every time.
 - **Open an app or a game**: anything in your Start menu (Store apps like Spotify included), your Steam and Epic
   games ("open Spotify", "launch Brawlhalla"). Named in your own words, it opens right away; if only her AI came up
   with it, you get a button first.
+- **Your folders and your desktop**: "open my downloads", "open File Explorer", "open the recycle bin", or a file,
+  folder or shortcut on your desktop, by its name. Anything that would run a program or a script (.exe, .bat, .ps1…)
+  always goes behind a button.
 - **Music**: "pause", "next", "louder", "mute"… press the media keys, so it works with Spotify and most players, right
-  as you send it. "Put Daft Punk on Spotify" opens Spotify on a search for it (the app if you have it, else the site).
+  as you send it. "Play Bohemian Rhapsody" or "put some Daft Punk on YouTube" opens the right video on YouTube,
+  straight away (not a search). "Play whatever you want": she picks. "Put Daft Punk on Spotify" opens Spotify on a
+  search for it.
 - **A website**: always behind a button showing where it goes.
 - **Close an app** ("close AM Music", "can you shut Discord down?"): a button with the app's name, and nothing happens
   until you click it. She closes it the way its own close button does, so it can still ask you to save. If it only
@@ -181,7 +186,8 @@ panel says so every time.
   away) with **Done** and **10 more min**. If she was off at the time, she brings it up when she's back. Her menu ›
   **Reminders** lists them, and each one can be cancelled there.
 
-Nothing else: she can't see your files, nor your screen unless you ask her to.
+Nothing else: she doesn't read your files, and only sees your screen when you ask ("look at my screen", "what do you
+see?" in her chat: she looks and answers right there, your conversation in mind).
 
 **She looks at your screen**, if you want. Her menu › **Look at my screen**: her eyes go to the window in front, a
 scanline sweeps it, and she tells you what she makes of it, her way. **Look at my screen now and then** lets her do it

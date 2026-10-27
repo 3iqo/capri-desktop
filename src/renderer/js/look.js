@@ -103,6 +103,19 @@ export class Look {
     return !this.chat.open && !this.guide.running && !panel.visible;
   }
 
+  // her eyes on the window in front (or the whole screen) while a scanline sweeps it
+  effect() {
+    const { wins, fg } = this.capri.windows;
+    const win = wins.find((w) => w.id === fg && !w.max);
+    const { w, floor } = this.capri.view;
+    const rect = win ? () => this.capri.windows.wins.find((o) => o.id === win.id) || null : () => ({ x: 0, y: 0, w, h: floor });
+    const toward = win ? Math.sign(win.x + win.w / 2 - this.capri.pos.x) || 1 : this.capri.towardCenter();
+    this.capri.perform('curious', toward);
+    this.fx.cutin(...this.capri.cutinAt(-toward), { kind: 'eyes', life: 520 });
+    this.fx.scan(rect, { covers: () => (win ? this.capri.coversOf(win.id) : []) });
+    this.voice.play('charge');
+  }
+
   async now({ manual = false } = {}) {
     if (this.looking) return;
     this.looking = true;
@@ -122,16 +135,7 @@ export class Look {
       }
       this.lastFg = this.capri.windows.fg;
       this.lastAt = Date.now();
-      // her eyes on the window in front (or the whole screen) while the scanline sweeps it
-      const { wins, fg } = this.capri.windows;
-      const win = wins.find((w) => w.id === fg && !w.max);
-      const { w, h, floor } = this.capri.view;
-      const rect = win ? () => this.capri.windows.wins.find((o) => o.id === win.id) || null : () => ({ x: 0, y: 0, w, h: floor });
-      const toward = win ? Math.sign(win.x + win.w / 2 - this.capri.pos.x) || 1 : this.capri.towardCenter();
-      this.capri.perform('curious', toward);
-      this.fx.cutin(...this.capri.cutinAt(-toward), { kind: 'eyes', life: 520 });
-      this.fx.scan(rect, { covers: () => (win ? this.capri.coversOf(win.id) : []) });
-      this.voice.play('charge');
+      this.effect();
       const res = await this.host.lookSay({ id: snap.id, persona: this.chat.lookPersona(), prompt: `${PROMPT}\n${this.chat.languageNote()}` });
       if (!res.ok) {
         if (res.code === 'novision') {

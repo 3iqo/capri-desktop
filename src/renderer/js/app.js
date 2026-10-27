@@ -250,6 +250,7 @@ async function boot() {
   // looking at your screen (look.js): when you ask, or now and then if you turned it on
   const look = new Look({ capri, panel, brain, chat, guide, host, fx, voice, active: () => performance.now() - lastMove });
   look.configure(config);
+  chat.look = look; // "regarde mon écran" in her chat
   // your PC as she feels it (pc.js): the processor, the battery, the network, a USB stick, a game
   const pc = new Pc({ capri, panel, brain, host, voice, chat, guide });
   pc.enabled = config.pcReact !== false;
