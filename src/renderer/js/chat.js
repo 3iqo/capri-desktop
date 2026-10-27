@@ -54,11 +54,13 @@ const GAME_ASK = /^(?:capri,?\s+)?(?:joue|play)\s+(?:à|au|aux|a|the game)\s/i;
 // "du Daft Punk", "some Queen": who to play, without the "some"
 const songOf = (s) => s
   .replace(/^(?:la |le |une? |the |some )?(?:musique|music|chanson|son|morceau|song|track|songs)\s+(?:de |d['’]|du |by |of )?/i, '')
-  .replace(/^(?:du|de la|de l['’]|des|some|un peu de|del|un poco de|algo de|um pouco de)\s+/i, '')
+  .replace(/^(?:(?:du|de la|de l['’]|des|de|some|un peu de|del|un poco de|algo de|um pouco de)\s+|d['’])/i, '')
   .replace(/\s+(?:on|sur|en|no|na|в)\s+youtube\s*$/i, '')
   .trim();
 // "démarre YouTube et mets la musique de Daft Punk": the song asked for after an "and"
-const PLAY_AFTER = /\s(?:et|and|y|e|и)\s+(?:mets|met|joue|play|put on|pon|toca|coloca|bota|включи|поставь)(?:[- ]moi|[- ]me)?\s+(.{2,100})$/i;
+const PLAY_AFTER = /\s(?:et|and|y|e|и)\s+(?:mets|met|joue|play|put on|pon|toca|coloca|bota|включи|поставь|démarre|demarre|lance|start|launch|écoute|ecoute)(?:[- ]moi|[- ]me)?\s+(.{2,100})$/i;
+// "lance la musique de Daft Punk", "start the song X": an app verb, but music right after it
+const MUSIC_START = /^(?:capri,?\s+)?(?:lance|démarre|demarre|start|launch|écoute|ecoute|pon|toca)(?:[- ]moi|[- ]me)?\s+(?:la |le |une? |the |some )?(?:musique|music|chanson|son|morceau|song|track|canci[óo]n|m[úu]sica|песню|музыку)\s+(.{2,100})$/i;
 // "mets ce que tu veux", "play whatever you want": she picks (her tag)
 const HER_PICK = /tu veux|ton choix|surprends|you want|whatever|your choice|surprise me|quieras|tu elecci[óo]n|quiser|sua escolha|хочешь|на твой выбор/i;
 // what's left when it doesn't say which song ("mets de la musique", "play something")
@@ -383,8 +385,12 @@ export class Chat {
     const app = this.askedToClose(text);
     if (app) return { kind: 'close', name: app };
     if (GAME_ASK.test(text) && count <= 8) return { kind: 'open', text };
-    const after = PLAY_AFTER.exec(text.trim())?.[1];
-    if (after && !VAGUE_SONG.test(after) && !HER_PICK.test(after)) return { kind: 'play', song: songOf(after.replace(/[\s.!?]+$/, '')) };
+    const start = MUSIC_START.exec(text.trim())?.[1];
+    if (start && !HER_PICK.test(start)) return { kind: 'play', song: songOf(start.replace(/[\s.!?]+$/, '')) };
+    const both = PLAY_AFTER.exec(text.trim());
+    const after = both?.[1];
+    // "ouvre discord et lance spotify": the first half too
+    if (after && !VAGUE_SONG.test(after) && !HER_PICK.test(after)) return { kind: 'play', song: songOf(after.replace(/[\s.!?]+$/, '')), before: text.trim().slice(0, both.index) };
     const play = PLAY_ASK.exec(text.trim())?.[1];
     if (play && !VAGUE_SONG.test(play) && !HER_PICK.test(play)) return { kind: 'play', song: songOf(play.replace(/[\s.!?]+$/, '')) };
     if (OPEN_ASK.test(text) && count <= 14) return { kind: 'open', text };
@@ -444,10 +450,14 @@ export class Chat {
       return shot ? { line: fmt(t.shot, { name: shot.name }), face: 'smug', files: [shot] } : null;
     }
     if (asked.kind === 'play') {
-      // "joue à Brawlhalla" is a game; anything else, a song
+      // what came before an "and" first ("ouvre discord et…"), unless it's YouTube, where the song goes anyway
+      const first = asked.before && OPEN_ASK.test(asked.before) && !/youtube/i.test(asked.before)
+        ? await this.doNow({ kind: 'open', text: asked.before }) : null;
+      // "joue à Brawlhalla" is a game, "lance spotify" an app; anything else, a song
       const game = await this.host.findLaunch(asked.song);
-      if (game && ['steam', 'epic', 'app'].includes(game.kind)) return this.openNow(game);
-      return this.youtube(asked.song);
+      const then = game && ['steam', 'epic', 'app', 'file'].includes(game.kind) && !game.risky ? await this.openNow(game) : await this.youtube(asked.song);
+      if (!first?.line) return then;
+      return { line: [first.line, then?.line].filter(Boolean).join('\n'), face: then?.face || first.face };
     }
     const item = await this.host.findLaunch(asked.text);
     const site = namedSite(asked.text);

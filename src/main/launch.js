@@ -14,8 +14,8 @@ const WIN = process.platform === 'win32';
 // not things to open from a chat: uninstallers, help pages and the like
 const SKIP = /uninstall|désinstaller|desinstalar|deinstall|readme|documentation|release notes|support center|website|manual/i;
 const STEAM_SKIP = /redistributable|dedicated server|steamworks/i;
-// words that don't tell apps apart ("Roblox Player" is "roblox")
-const FILLER = new Set(['player', 'launcher', 'app', 'the', 'for', 'windows', 'desktop', 'client', 'x64', 'x86', 'beta']);
+// words that don't tell apps apart ("Roblox Player" is "roblox", "AM Music" is "am")
+const FILLER = new Set(['player', 'launcher', 'app', 'the', 'for', 'windows', 'desktop', 'client', 'x64', 'x86', 'beta', 'music', 'musique', 'media', 'audio', 'video', 'videos']);
 const CACHE_MS = 10 * 60 * 1000; // installed apps hardly change
 
 let cache = null; // { at, items }
@@ -116,10 +116,13 @@ function match(items, text) {
   const joined = words(text).join('');
   let best = null;
   for (const item of items) {
-    const key = words(item.name).filter((w) => !FILLER.has(w));
+    const all = words(item.name);
+    const key = all.filter((w) => !FILLER.has(w));
+    if (!key.length) key.push(...all); // a name made only of those ("Media Player"): all of it
     if (!key.length) continue;
     const hits = key.filter((w) => said.has(w) || (w.length >= 5 && joined.includes(w)));
-    if (!hits.some((w) => w.length >= 3) || hits.length / key.length < 0.5) continue;
+    // a word of 3 letters or more, or all of a short name ("am" for AM Music)
+    if (!(hits.some((w) => w.length >= 3) || hits.length === key.length) || hits.length / key.length < 0.5) continue;
     const rank = (hits.length / key.length) * 10 + hits.join('').length / 10;
     if (!best || rank > best.rank) best = { item, rank };
   }
