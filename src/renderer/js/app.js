@@ -150,8 +150,14 @@ async function boot() {
     const at = await host.cursor().catch(() => null);
     const before = seen;
     seen = at;
-    if (!at?.inside || !before?.inside || (at.x === before.x && at.y === before.y)) return;
+    if (!at?.inside) return;
     const now = performance.now();
+    // the pointer is on her and she isn't clickable (its moves stopped reaching her): she is now
+    if (!interactive && now - lastMove > WATCH_MS) {
+      mouse = { x: at.x, y: at.y };
+      refreshHit();
+    }
+    if (!before?.inside || (at.x === before.x && at.y === before.y)) return;
     if (now - lastMove < WATCH_MS * 1.5 || now - rearmedAt < 20000) return;
     rearmedAt = now;
     host.rearm();
