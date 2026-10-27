@@ -15,20 +15,32 @@ const found = new Set(); // what a search showed you: the only paths she opens f
 const words = (query) => String(query || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .split(/[^\p{L}\p{N}.]+/u).filter((w) => w.length >= 2).slice(0, 5);
 
-// Windows Search: names first (every word in the name), then contents. null if the index can't be asked.
-async function indexed(terms) {
+// never in the results: code dependencies, app data, git internals
+const JUNK = ['node_modules', '\\AppData\\', '\\.git\\', '\\site-packages\\', '\\$Recycle.Bin\\'];
+const junk = (p) => JUNK.some((j) => p.includes(j));
+// files that are code, left out of a search by what's inside (any word shows up in some library)
+const CODE = ['js', 'mjs', 'cjs', 'ts', 'tsx', 'jsx', 'json', 'map', 'lock', 'yml', 'yaml', 'py', 'css', 'html', 'md', 'txt', 'xml', 'log'];
+
+// Windows Search: names first (every word in the name, of one of `exts` if any), then what's in
+// documents (not code). null if the index can't be asked.
+async function indexed(terms, exts) {
   const safe = terms.map((t) => t.replace(/[^\p{L}\p{N}.]/gu, '')).filter(Boolean);
-  if (!safe.length) return [];
+  const types = exts.map((e) => e.replace(/[^a-z0-9]/gi, '')).filter(Boolean);
+  if (!safe.length && !types.length) return [];
   const scope = `file:${app.getPath('home')}`; // backslashes: with slashes the index finds nothing
-  const byName = safe.map((t) => `System.FileName LIKE '%${t}%'`).join(' AND ');
-  const byText = `CONTAINS(*, '${safe.map((t) => `"${t}"`).join(' AND ')}')`;
+  const notJunk = "NOT System.ItemUrl LIKE '%node_modules%' AND NOT System.ItemUrl LIKE '%/AppData/%' AND NOT System.ItemUrl LIKE '%/.git/%'";
+  const ofType = types.length ? `(${types.map((e) => `System.FileExtension = '.${e}'`).join(' OR ')})` : '';
+  const byName = [...safe.map((t) => `System.FileName LIKE '%${t}%'`), ofType].filter(Boolean).join(' AND ');
+  const byText = safe.length && !types.length
+    ? `CONTAINS(*, '${safe.map((t) => `"${t}"`).join(' AND ')}') AND ${CODE.map((e) => `System.FileExtension <> '.${e}'`).join(' AND ')}`
+    : '';
   // ItemUrl (file:C:/Users/…): the real path. ItemPathDisplay is translated (C:\Utilisateurs\…\Bureau)
-  const query = (where) => `SELECT TOP ${LIMIT} System.ItemUrl FROM SYSTEMINDEX WHERE SCOPE='${scope}' AND ${where} ORDER BY System.DateModified DESC`;
+  const query = (where) => `SELECT TOP ${LIMIT} System.ItemUrl FROM SYSTEMINDEX WHERE SCOPE='${scope}' AND ${notJunk} AND ${where} ORDER BY System.DateModified DESC`;
   const script = [
     '$c = New-Object -ComObject ADODB.Connection',
     "$c.Open(\"Provider=Search.CollatorDSO;Extended Properties='Application=Windows';\")",
     // each query in a single-quoted PowerShell string (its own quotes doubled)
-    ...[query(byName), query(byText)].map((q) => `$r = New-Object -ComObject ADODB.Recordset; $r.Open('${q.replace(/'/g, "''")}', $c); while (-not $r.EOF) { $r.Fields.Item('System.ItemUrl').Value; $r.MoveNext() }; $r.Close()`),
+    ...[byName, byText].filter(Boolean).map((w) => `$r = New-Object -ComObject ADODB.Recordset; $r.Open('${query(w).replace(/'/g, "''")}', $c); while (-not $r.EOF) { $r.Fields.Item('System.ItemUrl').Value; $r.MoveNext() }; $r.Close()`),
   ].join('; ');
   const out = await powershell(script, 10000).catch(() => null);
   if (out == null) return null;
@@ -36,8 +48,8 @@ async function indexed(terms) {
   return [...new Set(paths.map((l) => decodeURIComponent(l.slice(5)).replace(/\//g, '\\')))];
 }
 
-// The walk, when the index isn't there: your usual folders, a few levels down, by name.
-function walked(terms) {
+// The walk, when the index isn't there: your usual folders, a few levels down, by name and type.
+function walked(terms, exts) {
   const roots = ['desktop', 'documents', 'downloads', 'pictures', 'music', 'videos'].map((k) => app.getPath(k));
   const onedrive = process.env.OneDrive;
   if (onedrive) roots.push(onedrive);
@@ -57,24 +69,26 @@ function walked(terms) {
       if (e.name.startsWith('.') || e.name === 'node_modules') continue;
       const full = path.join(dir, e.name);
       const name = words(e.name).join(' ');
-      if (terms.every((t) => name.includes(t))) hits.push(full);
+      const ext = path.extname(e.name).slice(1).toLowerCase();
+      if (terms.every((t) => name.includes(t)) && (!exts.length || exts.includes(ext))) hits.push(full);
       if (e.isDirectory() && depth < 5) queue.push([full, depth + 1]);
     }
   }
   return hits;
 }
 
-// [{ path, name, folder }], the newest first, at most LIMIT
-async function search(query) {
+// [{ path, name, folder }], the newest first, at most LIMIT. `query`: words of the name; `exts`:
+// the kinds of file it is (["aep"] for an After Effects project), when that's what was asked.
+async function search({ query = '', exts = [] } = {}) {
   const terms = words(query);
-  if (!terms.length) return [];
-  const paths = await indexed(terms);
-  const results = listed(paths?.length ? paths : walked(terms));
-  return results.length || !paths?.length ? results : listed(walked(terms));
+  if (!terms.length && !exts.length) return [];
+  const paths = await indexed(terms, exts);
+  const results = listed(paths?.length ? paths : walked(terms, exts));
+  return results.length || !paths?.length ? results : listed(walked(terms, exts));
 }
 
 function listed(paths) {
-  const results = paths.slice(0, LIMIT).map((p) => {
+  const results = paths.filter((p) => !junk(p)).slice(0, LIMIT).map((p) => {
     let time = 0;
     try {
       time = fs.statSync(p).mtimeMs;

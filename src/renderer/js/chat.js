@@ -79,6 +79,27 @@ const NOT_SEARCHED = new Set(('stp svp please pls peux tu can you could would pu
   + 'vidéo vidéos video videos file files folder folders archivo archivos carpeta carpetas arquivo arquivos pasta pastas файл '
   + 'файлы папка папку appelé appelée nommé called named llamado chamado qui s appelle est sont is are where où cherche recherche '
   + 'trouve retrouve search find look up busca encuentra procura acha найди поищи где dónde onde google internet web online ligne').split(' '));
+// the kind of file asked for: "mon projet after effect" is a .aep
+const FILE_TYPES = [
+  [/after ?effects?/i, ['aep']], [/premi[eè]re/i, ['prproj']], [/photoshop|\bpsd\b/i, ['psd']], [/illustrator/i, ['ai']],
+  [/blender/i, ['blend']], [/cinema ?4d|\bc4d\b/i, ['c4d']], [/fl ?studio/i, ['flp']], [/ableton/i, ['als']],
+  [/\bword\b|\bdocx?\b/i, ['docx', 'doc']], [/excel|\bxlsx?\b|tableur|spreadsheet/i, ['xlsx', 'xls', 'csv']],
+  [/powerpoint|\bpptx?\b|diapo|slides/i, ['pptx', 'ppt']], [/\bpdf\b/i, ['pdf']],
+  [/vid[ée]os?\b|\bmp4\b|\bfilms?\b|v[íi]deo|видео/i, ['mp4', 'mov', 'mkv', 'avi', 'webm']],
+  [/photos?\b|images?\b|\bpng\b|\bjpe?g\b|imagen|imagem|фото/i, ['png', 'jpg', 'jpeg', 'webp', 'heic']],
+  [/musiques?\b|\bmp3\b|\baudio\b|\bsongs?\b|музык/i, ['mp3', 'wav', 'flac', 'm4a', 'ogg']],
+  [/\bzip\b|\barchive|\brar\b|\b7z\b/i, ['zip', 'rar', '7z']],
+];
+const fileTypes = (text) => [...new Set(FILE_TYPES.filter(([re]) => re.test(text)).flatMap(([, exts]) => exts))];
+// words that only say what kind of file it is, or what to do with it once found
+const NOT_A_NAME = new Set(('and et y e и it ça ca lo la o open ouvre ouvrir ouvres abre abrir открой show montre affiche '
+  + 'projet projets project projects proyecto projeto проект after effect effects premiere pro photoshop illustrator blender cinema '
+  + '4d c4d fl studio ableton word excel powerpoint pdf mp4 mp3 png jpg jpeg zip rar 7z film films musique musiques music song songs '
+  + 'audio présentation presentation diapo slides tableur spreadsheet dernier dernière derniers last latest récent récents recent '
+  + 'nouveau new psd docx doc xlsx pptx').split(' '));
+// "…and open the folder", "…et ouvre-le": what to do with what she found
+const THEN_FOLDER = /(?:ouvre|ouvrir|open|show|montre|abre|abrir|открой|покажи)\s+(?:moi\s+)?(?:le |la |the |its |son |el |a |o )?(?:dossier|folder|carpeta|pasta|папку)/i;
+const THEN_OPEN = /(?:et|and|y|e|и)\s+(?:l['’])?(?:ouvre|open|lance|abre|открой)(?:[- ](?:le|la|les)|\s+(?:it|them|lo|la|o|его|её))?\s*[.!?]*$/i;
 const searched = (text) => text.replace(/^\s*capri[,!:]?\s+/i, '').toLowerCase().split(/[^\p{L}\p{N}.]+/u).filter((w) => w && !NOT_SEARCHED.has(w)).join(' ');
 // a Roblox game by its name: "in my roblox play steal a brain rot", "lance grow a garden sur roblox"
 const ROBLOX_VERB = /(?:^|\s)(?:play|joue(?:r)?(?: à| a)?|lance|launch|start|ouvre|open|mets|go to|va sur|juega(?: a)?|jogue|jogar|запусти|включи)\s+/gi;
@@ -393,7 +414,12 @@ export class Chat {
     const roblox = robloxGame(text);
     if (roblox) return { kind: 'roblox', game: roblox };
     if (SEARCH_VERB.test(text) && WEB_WORD.test(text) && searched(text)) return { kind: 'web', query: searched(text) };
-    if (SEARCH_VERB.test(text) && FILE_WORD.test(text) && searched(text)) return { kind: 'files', query: searched(text) };
+    const exts = fileTypes(text);
+    if (SEARCH_VERB.test(text) && (FILE_WORD.test(text) || exts.length)) {
+      const query = searched(text).split(' ').filter((w) => w && !NOT_A_NAME.has(w)).join(' ');
+      const then = THEN_FOLDER.test(text) ? 'folder' : THEN_OPEN.test(text) ? 'open' : null;
+      if (query || exts.length) return { kind: 'files', query, exts, then };
+    }
     const media = MEDIA_ASK.find(([, re]) => re.test(text))?.[0];
     if (media && (count <= 5 || MUSIC_WORD.test(text))) return { kind: 'media', action: media };
     const song = SPOTIFY_ASK.exec(text)?.[1];
@@ -460,10 +486,17 @@ export class Chat {
       return (await this.host.webSearch(asked.query)) ? { line: fmt(t.web, { query: asked.query }), face: 'smug' } : null;
     }
     if (asked.kind === 'files') {
-      const results = await this.host.searchFiles(asked.query);
-      if (!results.length) return { line: fmt(t.filesNone, { query: asked.query }), face: 'aside' };
+      const results = await this.host.searchFiles({ query: asked.query, exts: asked.exts });
+      const asking = asked.query || asked.exts.map((e) => `.${e}`).join(' ');
+      if (!results.length) return { line: fmt(t.filesNone, { query: asking }), face: 'aside' };
       const list = results.slice(0, 3).map((f) => `${f.name} (${f.folder})`).join(', ');
-      return { line: fmt(results.length === 1 ? t.fileFound : t.filesFound, { count: results.length, list }), face: 'smug', files: results };
+      const lines = [fmt(results.length === 1 ? t.fileFound : t.filesFound, { count: results.length, list })];
+      // "…and open the folder" / "…and open it": done right away, on the newest one
+      if (asked.then === 'folder' && (await this.host.openFile(results[0].path, true))) lines.push(fmt(t.folderOpened, { name: results[0].name }));
+      // (never a program or a script on its own: that one waits for its button)
+      const runs = /\.(exe|bat|cmd|ps1|vbs|vbe|js|jse|wsf|msi|reg|scr|com|jar|hta)$/i.test(results[0].name);
+      if (asked.then === 'open' && !runs && (await this.host.openFile(results[0].path))) lines.push(fmt(t.opened, { app: results[0].name }));
+      return { line: lines.join('\n'), face: 'smug', files: results };
     }
     if (asked.kind === 'shot') {
       // not her nor her panel in it

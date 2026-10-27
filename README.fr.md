@@ -180,7 +180,8 @@ fan d'elle, et le panneau du chat le dit à chaque fois.
 - **Tes dossiers et ton bureau** : « ouvre mes téléchargements », « ouvre l'explorateur de fichiers », « ouvre la
   corbeille », ou un fichier, un dossier ou un raccourci posé sur ton bureau, par son nom. Ce qui lancerait un programme
   ou un script (.exe, .bat, .ps1…) passe toujours par un bouton.
-- **Chercher tes fichiers** (« trouve mon CV », « où est le pdf du contrat ? ») : dans tout ton dossier utilisateur, par
+- **Chercher tes fichiers** (« trouve mon CV », « où est mon projet After Effects ? », « trouve ma dernière vidéo et
+  ouvre le dossier ») : par nom ou par sorte de fichier (un projet After Effects, c'est un .aep), dans tout ton dossier utilisateur, par
   nom et par contenu (avec l'index de recherche de Windows), avec des boutons pour ouvrir ce qu'elle a trouvé ou voir le
   dossier. Rien ne sort de ton PC.
 - **Chercher sur le web** (« cherche la météo de Paris sur Google ») et **faire une capture d'écran** (« fais une

@@ -171,7 +171,8 @@ panel says so every time.
 - **Your folders and your desktop**: "open my downloads", "open File Explorer", "open the recycle bin", or a file,
   folder or shortcut on your desktop, by its name. Anything that would run a program or a script (.exe, .bat, .ps1…)
   always goes behind a button.
-- **Finding your files** ("find my resume", "where's the contract pdf?"): across your whole user folder, by name and by
+- **Finding your files** ("find my resume", "where's my After Effects project?", "find my last video and open the
+  folder"): by name or by kind of file (an After Effects project is a .aep), across your whole user folder, by name and by
   what's in them (with Windows' search index), with buttons to open what she found or show its folder. Nothing leaves
   your PC.
 - **Searching the web** ("search the weather in Paris on Google") and **taking a screenshot** ("take a screenshot":
