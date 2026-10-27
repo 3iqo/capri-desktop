@@ -87,9 +87,10 @@ glitche, commente chaque action, vient te chercher quand elle attend ta permissi
   et le contenu de la fenêtre n'est jamais lu : c'est juste dessiné par-dessus, deux secondes.
   Si ça te gêne, décoche *Posséder mes fenêtres* dans le menu de l'icône.
 - **Elle sent ton PC** (elle vit dedans, après tout) : processeur à fond pendant un moment, elle surchauffe, s'évente
-  et de la chaleur monte de sa crinière. Batterie faible (sur un portable), elle s'affaisse et clignote, puis revit
-  quand tu la branches. Plus de réseau, elle encaisse le coup ; il revient, elle est contente. Une clé USB branchée,
-  elle plonge dedans (près de l'horloge), fouille un peu et revient donner son avis. Un jeu devant toi (Steam, Epic,
+  et de la chaleur monte de sa crinière. Sur un portable : le chargeur branché ou débranché, elle le sent ; batterie
+  faible, elle s'affaisse et clignote. Plus de réseau, elle encaisse le coup ; il revient, elle est contente. Une clé
+  USB branchée, elle plonge dedans (près de l'horloge), fouille un peu et revient donner son avis. Un téléphone, une
+  manette, un casque ou autre chose branché : un éclair vers l'horloge et un mot dessus. Un jeu devant toi (Steam, Epic,
   Riot, Xbox, GOG), elle le commente et se range pendant que tu joues, puis revient te demander si tu as gagné.
   Décoche *Réagir à mon PC* dans son menu pour arrêter.
 - **Petites fioritures** : un tour complet avec des images rémanentes, un saut, un regard à gauche puis à droite, la tête penchée,
@@ -103,7 +104,7 @@ glitche, commente chaque action, vient te chercher quand elle attend ta permissi
 
 ![Elle s'endort jusqu'à son masque, se réveille, et rangée en bas à gauche](docs/sleep.png)
 
-Le suivi des fenêtres ne marche que sous Windows pour l'instant (un petit script PowerShell lit la position des fenêtres, jamais leur contenu ; le titre de celle qui est devant sert seulement à repérer une autre IA, voir « Elle s'attache à toi », et le dossier de son programme à reconnaître un jeu ; les clés USB branchées ne sont vues que par leur lettre).
+Le suivi des fenêtres ne marche que sous Windows pour l'instant (un petit script PowerShell lit la position des fenêtres, jamais leur contenu ; le titre de celle qui est devant sert seulement à repérer une autre IA, voir « Elle s'attache à toi », et le dossier de son programme à reconnaître un jeu ; les clés USB branchées ne sont vues que par leur lettre, les autres appareils par le nom que Windows leur donne).
 Sur macOS et Linux, elle flotte, dépasse des bords, tombe et se balade quand même.
 
 ### Elle te fait visiter

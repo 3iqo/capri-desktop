@@ -9,8 +9,10 @@
 param([long]$Self = 0, [int]$ParentPid = 0)
 $ErrorActionPreference = 'Stop'
 
-Add-Type -TypeDefinition @"
+Add-Type -ReferencedAssemblies System.Management -TypeDefinition @"
 using System;
+using System.Collections.Generic;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -126,6 +128,65 @@ public static class CapriWindows {
 
   public static void Init() {
     SetProcessDpiAwarenessContext(new IntPtr(-4)); // per-monitor v2: real pixels everywhere
+    try { WatchDevices(); } catch {}
+  }
+
+  // Devices plugged in or out (a phone, a controller, a headset...). Windows says something
+  // changed; we list the devices again and see what's new or gone.
+  static Dictionary<string, string[]> devices;
+  static int plugs = 0;
+  static string plug = "null";
+  static readonly object gate = new object();
+
+  static Dictionary<string, string[]> Devices() {
+    var all = new Dictionary<string, string[]>();
+    using (var q = new ManagementObjectSearcher("SELECT DeviceID, Name, PNPClass FROM Win32_PnPEntity")) {
+      foreach (ManagementBaseObject d in q.Get()) {
+        var id = d["DeviceID"] as string;
+        if (id != null) all[id] = new[] { (d["Name"] as string) ?? "", (d["PNPClass"] as string) ?? "" };
+      }
+    }
+    return all;
+  }
+
+  static void WatchDevices() {
+    devices = Devices();
+    var watcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2 OR EventType = 3"));
+    watcher.EventArrived += (s, e) => {
+      try { Changed(); } catch {} // never take the whole helper down over a device
+    };
+    watcher.Start();
+  }
+
+  static void Changed() {
+    System.Threading.Thread.Sleep(1200); // a phone shows up as several devices, one after the other
+    lock (gate) {
+      var now = Devices();
+      var added = new List<string[]>();
+      var removed = new List<string[]>();
+      foreach (var d in now) if (!devices.ContainsKey(d.Key)) added.Add(d.Value);
+      foreach (var d in devices) if (!now.ContainsKey(d.Key)) removed.Add(d.Value);
+      devices = now;
+      bool plugged = added.Count > 0;
+      var best = Best(plugged ? added : removed);
+      if (best == null) return;
+      plugs++;
+      plug = "{\"n\":" + plugs + ",\"in\":" + (plugged ? "true" : "false") + ",\"name\":" + Json(best[0]) + ",\"class\":" + Json(best[1]) + "}";
+    }
+  }
+
+  // The device that says the most about what was plugged: "Galaxy S21" rather than "USB Composite Device".
+  static readonly Regex VAGUE = new Regex(@"composite|hub|concentrateur|input device|hid|mass storage|stockage|g.n.ri|virtu|num.rat|interface|host|h.te|bus|port|endpoint|service|profil|protocol|p.riph.rique|dispositivo", RegexOptions.IgnoreCase); // ASCII only: PowerShell reads this file as ANSI
+  public static string[] Best(List<string[]> list) {
+    string[] best = null;
+    int top = int.MinValue;
+    foreach (var d in list) {
+      if (d[0] == "") continue;
+      int score = d[1] == "WPD" ? 6 : d[1] == "AudioEndpoint" ? 5 : d[1] == "Camera" || d[1] == "Image" ? 4 : d[1] == "HIDClass" || d[1] == "Keyboard" || d[1] == "Mouse" ? 3 : d[1] == "Bluetooth" ? 2 : 1;
+      if (VAGUE.IsMatch(d[0])) score -= 4;
+      if (score > top) { top = score; best = d; }
+    }
+    return best;
   }
 
   public static string Snapshot(long self) {
@@ -138,7 +199,9 @@ public static class CapriWindows {
     sb.Append("{\"fg\":").Append(fg.ToInt64()).Append(",\"taskbar\":").Append(taskbar ? "true" : "false")
       .Append(",\"ai\":").Append(Ai(fg))
       .Append(",\"game\":").Append(game == "" ? "null" : Json(game))
-      .Append(",\"usb\":").Append(Usb()).Append(",\"wins\":[");
+      .Append(",\"usb\":").Append(Usb());
+    lock (gate) sb.Append(",\"plug\":").Append(plug);
+    sb.Append(",\"wins\":[");
     int count = 0;
     EnumWindows((h, l) => {
       if (count >= 40) return false;

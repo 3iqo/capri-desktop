@@ -82,9 +82,10 @@ glitches, comments on every action, comes to find you when it needs your permiss
   Then she comes out of another window. Nothing is drawn over the windows in front of it, and the window's contents
   are never read: it's just drawn over, for two seconds. If it bothers you, untick *Possess my windows* in the tray menu.
 - **She feels your PC** (she lives in it, after all): the processor at full tilt for a while, she overheats, fans
-  herself and heat comes off her mane. Battery running low (on a laptop), she sags and flickers, and perks up once
-  you plug it in. The network gone, she takes the hit; back, she's glad. A USB stick plugged in, she dives into it (by
-  the clock), rummages around and comes back with her verdict. A game in front of you (Steam, Epic, Riot, Xbox, GOG),
+  herself and heat comes off her mane. On a laptop: the charger plugged in or out, she feels it; the battery running
+  low, she sags and flickers. The network gone, she takes the hit; back, she's glad. A USB stick plugged in, she dives
+  into it (by the clock), rummages around and comes back with her verdict. A phone, a controller, a headset or anything
+  else plugged in: a bolt toward the clock and a word about it. A game in front of you (Steam, Epic, Riot, Xbox, GOG),
   she says something about it and puts herself away while you play, then comes back to ask if you won. Untick *React
   to my PC* in her menu to stop it.
 - **Little flourishes**: a full spin with afterimages, a hop, looking left and right, the cocked head,
@@ -98,7 +99,7 @@ glitches, comments on every action, comes to find you when it needs your permiss
 
 ![Asleep down to her mask, waking up, and put away bottom left](docs/sleep.png)
 
-Window tracking is Windows-only for now (a tiny PowerShell helper reads window positions, never their contents; the title of the one in front is only used to spot another AI, see "She gets attached", and its program's folder to tell a game; the USB sticks plugged in are seen by their drive letter only).
+Window tracking is Windows-only for now (a tiny PowerShell helper reads window positions, never their contents; the title of the one in front is only used to spot another AI, see "She gets attached", and its program's folder to tell a game; the USB sticks plugged in are seen by their drive letter, other devices by the name Windows gives them).
 On macOS and Linux she still floats, peeks, falls and wanders.
 
 ### She shows you around

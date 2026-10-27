@@ -5,7 +5,7 @@
 // into the overlay's coordinates. It also says when the window in front is another AI (ChatGPT,
 // Gemini…: `ai`, the names it matched), for her jealousy, and never passes on a title; which game
 // is in front, if one (`game`, its folder in Steam's library or another launcher's); and the USB
-// sticks plugged in (`usb`, drive letters).
+// sticks plugged in (`usb`, drive letters), and the last device plugged in or out (`plug`).
 
 const path = require('node:path');
 const readline = require('node:readline');
@@ -41,7 +41,7 @@ function startWindowWatch({ overlay, onUpdate }) {
       .filter((w) => w.x < bounds.width && w.x + w.w > 0 && w.y < bounds.height && w.y + w.h > 0);
     onUpdate({
       fg: last.fg, taskbar: Boolean(last.taskbar), ai: Array.isArray(last.ai) ? last.ai : [],
-      game: last.game || null, usb: Array.isArray(last.usb) ? last.usb : [], wins,
+      game: last.game || null, usb: Array.isArray(last.usb) ? last.usb : [], plug: last.plug || null, wins,
     });
   };
 
