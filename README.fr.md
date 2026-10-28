@@ -157,6 +157,10 @@ La première fois, elle règle tout avec toi, avec des boutons, sans terminal :
   winget, l'installeur de Windows), le réveille, et télécharge un modèle pendant qu'une barre se remplit : gemma3
   (3,3 Go, meilleur dans les autres langues que l'anglais) ou llama3.2 (2 Go, pour les petits PC). Sur un tout petit
   modèle (1B et moins), elle te prévient qu'elle risque de dire n'importe quoi et t'en propose un meilleur.
+  Connecté à Ollama ? Elle propose aussi ses modèles cloud gratuits (`beam:cloud` en ce moment) : rien à télécharger,
+  bien plus gros que ce qui tient sur un PC, mais tes messages passent par les serveurs d'Ollama. Pas connecté, son
+  menu › **Modèle IA** a **Me connecter à Ollama (modèles cloud gratuits)…**. Si un modèle cloud ne répond plus
+  (déconnecté, plus d'usage gratuit), elle repasse sur un modèle de ton PC.
 - **En ligne, sans compte** : Pollinations, rien à régler.
 - **J'ai une clé** : Groq ou Gemini (tous les deux ont une offre gratuite), OpenRouter, OpenAI, Mistral ou DeepSeek.
   Tu colles ta clé dans son panneau et elle la vérifie. Elle reste sur ton PC, chiffrée avec ton compte Windows, et ne
@@ -419,14 +423,16 @@ et l'envoie à `127.0.0.1` uniquement.
 Le contenu de tes fichiers n'est jamais transmis : pour une écriture, seule sa taille passe.
 
 Son chat va à Ollama sur ton PC (`127.0.0.1:11434`, ou `OLLAMA_HOST`) avec ce qu'elle sait du moment (le nom du
-projet, la dernière action de Claude, les compteurs du jour). Son journal de mission reste dans son propre stockage,
+projet, la dernière action de Claude, les compteurs du jour). Sur un modèle cloud d'Ollama (ceux qui finissent par
+`:cloud`), Ollama l'envoie à ses serveurs, et son chat dit « IA en ligne » au lieu d'« IA locale ». Son journal de mission reste dans son propre stockage,
 sur ton PC, comme vos rappels et où vous en êtes, elle et toi.
 
 Le titre de la fenêtre qui est devant toi est seulement comparé, sur ton PC, à une liste de noms d'IA (pour sa
 jalousie) : il n'est ni gardé ni envoyé nulle part.
 
 Quand elle regarde ton écran (seulement si tu le lui demandes, ou si tu as coché *Regarder mon écran de temps en
-temps*), une image de l'écran va à l'IA de son chat : sur ton PC avec Ollama, chez le service en ligne sinon. Elle
+temps*), une image de l'écran va à l'IA de son chat : sur ton PC avec Ollama (un modèle local), chez le service en
+ligne sinon. Elle
 n'est jamais écrite sur le disque.
 
 ## Direction artistique
@@ -497,7 +503,7 @@ tools/build-cutins.py    découpe les cut-ins et ses expressions dans des images
 tools/build-intro.py     détoure les gros plans de son intro, tous de la même façon
 src/main/                Electron : fenêtre transparente plein écran, clic à travers, tray, bridge HTTP local
   windows.js / .ps1      où sont les autres fenêtres (Windows), pour qu'elle s'assoie dessus
-  ollama.js              son chat : le modèle local, via Ollama
+  ollama.js              son chat : le modèle local via Ollama, ou un de ses modèles cloud
   apps.js                fermer une appli que tu lui demandes de fermer (après ton clic)
 src/renderer/js/
   sprite.js              shader WebGL : tête, crinière, position assise, smears, images rémanentes, couleurs, glitch
@@ -521,7 +527,8 @@ src/renderer/js/
 
 Pour bosser dessus : `npm run dev` active des routes de debug sur le bridge (`/debug/capture` enregistre une image de la fenêtre dans `captures/`,
 `/debug/testwin` ouvre des fenêtres de test sur lesquelles elle peut s'asseoir, une par nom, `/debug/mouse` bouge et clique un pointeur
-factice sur la fenêtre de Capri, sans toucher au vrai, `/debug/type` écrit dans son chat).
+factice sur la fenêtre de Capri, sans toucher au vrai, `/debug/type` écrit dans son chat, `/debug/menu` liste son menu
+et peut cliquer sur un de ses éléments).
 `npm run dist` fabrique l'installeur Windows dans `dist/`.
 
 ## Crédits et droits

@@ -46,6 +46,8 @@ let lastWindows = null;
 let chatModels = null; // the provider's models, as last seen (null: not reached)
 let chatError = null;  // why not, when the provider said
 let chatErrorCode = null; // 'nokey' or 'nourl': what her setup should ask for
+// Ollama's cloud, as last seen: your account ({ name } or { signin }) and the models free with it
+let cloud = { at: 0, account: null, free: [] };
 const chats = new Map(); // id -> AbortController of an answer being streamed
 
 const userSoundsDir = () => path.join(app.getPath('userData'), 'sounds');
@@ -384,9 +386,17 @@ function rebuildTray() {
         { type: 'separator' },
         ...(chatModels?.length
           ? chatModels.map((name) => ({
-            label: name, type: 'radio', checked: name === pickModel(cfg), click: () => updateConfig({ chatModel: name }),
+            label: cloud.free.includes(name) ? `${name} · ${t.cloudFree}` : name,
+            type: 'radio', checked: name === pickModel(cfg), click: () => updateConfig({ chatModel: name }),
           }))
           : [{ label: (chatError || t.noOllama).slice(0, 80), enabled: false }]),
+        // Ollama's free cloud models when you're signed in to it, fetched on the click (it takes a second)
+        ...(cfg.provider === 'ollama' && chatModels ? [
+          ...cloud.free.filter((name) => !chatModels.includes(name)).map((name) => ({
+            label: `${name} · ${t.cloudFree}`, type: 'radio', checked: false, click: () => fetchModel(name).catch(() => rebuildTray()),
+          })),
+          ...(cloud.account?.signin ? [{ label: t.cloudSignin, click: signInToOllama }] : []),
+        ] : []),
         { type: 'separator' },
         ...(cfg.provider === 'claude' ? [
           { label: `Claude Code: ${cfg.claudeCwd || app.getPath('home')}`, click: pickClaudeFolder },
@@ -503,10 +513,12 @@ function runHooks(action, { quiet = false } = {}) {
   return outcome;
 }
 
-// The model she talks with: the one picked in her menu if it's still installed, else the first.
+// The model she talks with: the one picked in her menu if it's still installed, else the first one
+// on this PC (a cloud model only once you pick it).
 function pickModel(cfg = config.load()) {
   if (!chatModels?.length) return null;
-  return chatModels.includes(cfg.chatModel) ? cfg.chatModel : chatModels[0];
+  if (chatModels.includes(cfg.chatModel)) return cfg.chatModel;
+  return chatModels.find((m) => !ollama.isCloud(m)) || chatModels[0];
 }
 
 async function refreshModels() {
@@ -519,12 +531,50 @@ async function refreshModels() {
     return null;
   });
   rebuildTray();
+  if (cfg.provider === 'ollama' && chatModels) refreshCloud(); // in the background: it asks ollama.com
   return chatModels;
 }
 
+// Whether you're signed in to Ollama, and its free cloud models if so. Once a minute at most.
+let cloudCheck = null; // the look under way
+function refreshCloud(force = false) {
+  if (!force && Date.now() - cloud.at < 60000) return cloudCheck || Promise.resolve(cloud);
+  const at = Date.now();
+  cloud.at = at;
+  cloudCheck = (async () => {
+    const account = await ollama.account();
+    const free = account?.name ? await ollama.freeModels() : [];
+    cloud = { at, account, free };
+    rebuildTray();
+    return cloud;
+  })().finally(() => { cloudCheck = null; });
+  return cloudCheck;
+}
+
+// A model fetched with Ollama (a cloud one is only a small file), then her chat on it.
+async function fetchModel(name, onProgress, signal) {
+  await setup.pullModel(name, onProgress, signal);
+  updateConfig({ provider: 'ollama' });
+  await refreshModels();
+  const model = chatModels?.find((m) => m === name || m.startsWith(`${name}:`));
+  if (model) updateConfig({ chatModel: model });
+  return model;
+}
+
+// The page that links this PC to your Ollama account, then a look every few seconds until you're in.
+async function signInToOllama() {
+  if (!cloud.account?.signin) return;
+  shell.openExternal(cloud.account.signin);
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    if ((await refreshCloud(true)).account?.name) return;
+  }
+}
+
 // Her answer from the model picked, or from the next one when that one can't: too busy twice in a row
-// (Gemini's "high demand"), or not served anymore (an older model closed to new keys). The model
-// that answered is kept for next time.
+// (Gemini's "high demand", an Ollama cloud model out of free use), not served anymore (an older model
+// closed to new keys), or signed out of Ollama. A model on this PC first. The model that answered is
+// kept for next time.
 async function chatWithFallback(cfg, messages, send, signal, streamed) {
   let model = pickModel(cfg);
   const tried = new Set();
@@ -535,13 +585,13 @@ async function chatWithFallback(cfg, messages, send, signal, streamed) {
       if (model !== pickModel(cfg)) updateConfig({ chatModel: model });
       return text;
     } catch (err) {
-      if (signal.aborted || streamed() || !['busy', 'gone'].includes(err.code)) throw err;
+      if (signal.aborted || streamed() || !['busy', 'gone', 'signin'].includes(err.code)) throw err;
       if (err.code === 'busy' && busy++ === 0) {
         await new Promise((r) => setTimeout(r, 1500)); // usually gone a moment later
         continue;
       }
       tried.add(model);
-      const next = chatModels?.find((m) => !tried.has(m));
+      const next = chatModels?.find((m) => !tried.has(m) && !ollama.isCloud(m)) || chatModels?.find((m) => !tried.has(m));
       if (!next || tried.size >= 3) throw err;
       model = next;
       busy = 0;
@@ -669,8 +719,10 @@ function registerIpc() {
     const models = await refreshModels();
     if (!models) return { ok: false, error: chatError || 'offline', code: chatErrorCode, provider };
     if (!models.length) return { ok: false, error: 'nomodel', provider };
-    llm.warm(provider, pickModel()); // loading while you type your first message
-    return { ok: true, provider, model: pickModel(), agent: provider === 'claude', local: llm.isLocal(provider, cfg), warmup: provider === 'ollama' };
+    const model = pickModel();
+    llm.warm(provider, model); // loading while you type your first message
+    const local = llm.isLocal(provider, cfg, model);
+    return { ok: true, provider, model, agent: provider === 'claude', local, warmup: provider === 'ollama' && local };
   });
   // her answer, streamed to the overlay piece by piece as `chat:delta`
   ipcMain.handle('chat:send', async (_e, { id, messages }) => {
@@ -722,7 +774,9 @@ function registerIpc() {
   // where her AI runs, for what she tells you before she looks: { local, provider, model }
   ipcMain.handle('look:where', () => {
     const cfg = config.load();
-    return { local: llm.isLocal(cfg.provider, cfg), provider: llm.PROVIDERS[cfg.provider]?.label || cfg.provider, model: pickModel(cfg) };
+    const model = pickModel(cfg);
+    const provider = cfg.provider === 'ollama' && ollama.isCloud(model) ? 'Ollama' : llm.PROVIDERS[cfg.provider]?.label || cfg.provider;
+    return { local: llm.isLocal(cfg.provider, cfg, model), provider, model };
   });
   ipcMain.handle('chat:memory', () => readMemory().history || []);
   ipcMain.on('chat:remember', (_e, history) => Array.isArray(history) && saveMemory({ history }));
@@ -730,7 +784,11 @@ function registerIpc() {
   // setting her up with buttons (setup.js): Ollama and a model, or a key, or an address
   const progress = (payload) => overlay?.webContents.send('setup:progress', payload);
   let pulling = null; // AbortController of the model being fetched
-  ipcMain.handle('setup:info', () => ({ models: setup.MODELS, ram: os.totalmem(), keyed: Object.keys(setup.KEY_PAGES) }));
+  ipcMain.handle('setup:info', async () => {
+    // the free cloud models too, when Ollama is up and you're signed in to it
+    const { free } = (await ollama.models().catch(() => null)) ? await refreshCloud() : { free: [] };
+    return { models: setup.MODELS, cloud: free, ram: os.totalmem(), keyed: Object.keys(setup.KEY_PAGES) };
+  });
   ipcMain.handle('setup:ollama', () => setup.ollamaState());
   ipcMain.handle('setup:install', () => setup.installOllama((line) => progress({ kind: 'install', line })));
   ipcMain.handle('setup:start', async () => {
@@ -739,16 +797,12 @@ function registerIpc() {
     return res;
   });
   ipcMain.handle('setup:pull', async (_e, name) => {
-    if (!setup.MODELS.some((m) => m.name === name)) return { ok: false, error: 'unknown model' };
+    if (!setup.MODELS.some((m) => m.name === name) && !cloud.free.includes(name)) return { ok: false, error: 'unknown model' };
     pulling?.abort();
     const abort = new AbortController();
     pulling = abort;
     try {
-      await setup.pullModel(name, (p) => progress({ kind: 'pull', ...p }), abort.signal);
-      updateConfig({ provider: 'ollama' });
-      await refreshModels();
-      const model = chatModels?.find((m) => m === name || m.startsWith(`${name}:`));
-      if (model) updateConfig({ chatModel: model });
+      const model = await fetchModel(name, (p) => progress({ kind: 'pull', ...p }), abort.signal);
       return { ok: true, model };
     } catch (err) {
       return { ok: false, error: abort.signal.aborted ? 'stopped' : err.message };
@@ -900,6 +954,13 @@ async function debugHandler(route, body) {
       overlay.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...at });
     }
     return { ok: true };
+  }
+  if (route === 'menu') {
+    // her menu as labels, and a click on one of them if asked ({ click: 'beam:cloud · ...' })
+    const items = (menu) => menu.items.filter((i) => i.label).map((i) => (i.submenu ? { [i.label]: items(i.submenu) } : i.label));
+    const find = (menu) => menu.items.reduce((hit, i) => hit || (i.label === body.click ? i : i.submenu && find(i.submenu)), null);
+    if (body.click) find(trayMenu)?.click();
+    return { ok: true, value: items(trayMenu) };
   }
   if (route === 'eval') {
     // a look inside the overlay (app.js puts what's there on window.dev in --dev)

@@ -215,9 +215,11 @@ async function chat(id, cfg, { model, messages }, onDelta, signal) {
   return openaiChat(p, { model, messages }, onDelta, signal);
 }
 
-// Whether her answers stay on this PC: a server on this machine.
-function isLocal(id, cfg) {
-  if (id === 'ollama') return /^(https?:\/\/)?(127\.0\.0\.1|localhost|0\.0\.0\.0|\[?::1\]?)(:|\/|$)/.test(process.env.OLLAMA_HOST || '127.0.0.1');
+// Whether her answers stay on this PC: a server on this machine (and with Ollama, not a cloud model).
+function isLocal(id, cfg, model) {
+  if (id === 'ollama') {
+    return !ollama.isCloud(model) && /^(https?:\/\/)?(127\.0\.0\.1|localhost|0\.0\.0\.0|\[?::1\]?)(:|\/|$)/.test(process.env.OLLAMA_HOST || '127.0.0.1');
+  }
   if (id === 'custom') return /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(cfg.customUrl || '');
   return Boolean(PROVIDERS[id].local);
 }

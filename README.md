@@ -149,6 +149,10 @@ The first time, she sets it up with you, with buttons, no terminal:
   Windows' own installer), wakes it up, and downloads a model while a bar fills up: gemma3 (3.3 GB, better in languages
   other than English) or llama3.2 (2 GB, for smaller PCs). On a tiny model (1B and under) she warns you it may talk
   nonsense and offers a better one.
+  Signed in to Ollama? She also offers its free cloud models (`beam:cloud` today): nothing to download, much bigger
+  than what fits on a PC, but your messages go through Ollama's servers. Not signed in, her menu › **AI model** has
+  **Sign in to Ollama (free cloud models)…**. If a cloud model stops answering (signed out, out of free use), she
+  goes back to a model on your PC.
 - **Online, no account**: Pollinations, nothing to set up.
 - **I have a key**: Groq or Gemini (both have a free tier), OpenRouter, OpenAI, Mistral or DeepSeek. You paste your
   key in her panel and she checks it. It's kept on your PC, encrypted with your Windows account, and only ever sent to
@@ -398,14 +402,15 @@ Claude's last message up to 6,000 characters so she can show it to you, all trun
 Your file contents are never sent: for a write, only its size goes through.
 
 Her chat goes to Ollama on your PC (`127.0.0.1:11434`, or `OLLAMA_HOST`) with what she knows of the moment (the
-project's name, Claude's last action, today's counts). Her mission log stays in her own storage on your PC, like your
+project's name, Claude's last action, today's counts). On one of Ollama's cloud models (the ones ending in `:cloud`),
+Ollama sends it on to its servers, and her chat says "online AI" instead of "local AI". Her mission log stays in her own storage on your PC, like your
 reminders and where you two stand.
 
 The title of the window in front of you is only checked, on your PC, against a list of AI names (for her jealousy):
 it's never kept or sent anywhere.
 
 When she looks at your screen (only when you ask, or if you ticked *Look at my screen now and then*), a picture of the
-screen goes to her chat's AI: on your PC with Ollama, to the online service otherwise. It's never written to disk.
+screen goes to her chat's AI: on your PC with Ollama (a local model), to the online service otherwise. It's never written to disk.
 
 ## Art direction
 
@@ -473,7 +478,7 @@ tools/build-cutins.py    cuts the cut-ins and her faces out of frames of the sho
 tools/build-intro.py     cuts her intro's close-ups out of their background, all the same way
 src/main/                Electron: full-screen transparent click-through window, tray, local HTTP bridge
   windows.js / .ps1      where the other windows are (Windows only), so she can sit on them
-  ollama.js              her chat: the local model, through Ollama
+  ollama.js              her chat: the local model through Ollama, or one of its cloud models
   apps.js                closing an app you asked her to close (after your click)
 src/renderer/js/
   sprite.js              WebGL shader: head tilt, mane flare, sitting, smears, afterimages, colors, glitch
@@ -497,7 +502,8 @@ src/renderer/js/
 
 To hack on it: `npm run dev` turns on debug routes on the bridge (`/debug/capture` saves a frame of the window to `captures/`,
 `/debug/testwin` opens test windows she can sit on, one per name, `/debug/mouse` moves and clicks a stand-in pointer
-over Capri's window, without touching the real one, `/debug/type` types in her chat).
+over Capri's window, without touching the real one, `/debug/type` types in her chat, `/debug/menu` lists her menu and
+can click an item of it).
 `npm run dist` builds the Windows installer in `dist/`.
 
 ## Credits and rights
